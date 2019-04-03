@@ -21,3 +21,6 @@
 
 # Executables
 *.out
+
+# Project files
+*.dat
