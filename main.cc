@@ -1,4 +1,16 @@
+#include "calper.h"
+
+#include <fstream>
 #include <iostream>
+#include <unordered_map>
+
+
+int string_to_int(char string[]) {
+    int result;
+    std::istringstream stringstream(string);
+    stringstream >> result;
+    return result;
+}
 
 
 void show_task(int argc, char *argv[]) {
@@ -6,6 +18,48 @@ void show_task(int argc, char *argv[]) {
 
 
 void add_task(int argc, char *argv[]) {
+    struct Task task;
+    struct Date date;
+
+    int arg = 2;
+    std::ostringstream title;
+    bool stream_is_empty = true;
+    while (arg < argc - 1) {
+        std::string argument = argv[arg];
+
+        if (argument == "--day") {
+            date.day = string_to_int(argv[arg + 1]);
+            arg += 2;
+        } else if (argument == "--month") {
+            date.month = string_to_int(argv[arg + 1]);
+            arg += 2;
+        } else if (argument == "--year") {
+            date.year = string_to_int(argv[arg + 1]);
+            arg += 2;
+        } else if (argument == "--start") {
+            std::tm start = {};
+            std::istringstream stream(argv[arg + 1]);
+            if (stream >> std::get_time(&start, "%H:%M"))
+                task.start_time = start;
+            arg += 2;
+        } else if (argument == "--end") {
+            std::tm end = {};
+            std::istringstream stream(argv[arg + 1]);
+            if (stream >> std::get_time(&end, "%H:%M"))
+                task.end_time = end;
+            arg += 2;
+        } else {
+            if (stream_is_empty) {
+                title << argv[arg];
+                stream_is_empty = false;
+            } else {
+                title << ' ' << argv[arg];
+            }
+            arg++;
+        }
+    }
+    task.title = title.str();
+    task.date = date;
 }
 
 
