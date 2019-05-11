@@ -1,8 +1,28 @@
-#include "calper.h"
+#define DATABASE_NAME "calper.dat"
 
+#include "Task.h"
+#include <ctime>
 #include <fstream>
-#include <iostream>
-#include <unordered_map>
+#include <iomanip>
+
+
+int show_usage(char *program_name) {
+    std::cerr << "Usage: " << program_name << " <command> [options]\n\n"
+              << "Commands:\n"
+              << "\tshow [options]           Show tasks\n"
+              << "\tadd <TITLE> [options]    Add task\n"
+              << "\tedit <NUMBER> [options]  Edit task\n"
+              << "\tremove <NUMBER>          Remove task\n"
+              << "\n"
+              << "Options:\n"
+              << "\t-d DAY                   Day of task (default is system time)\n"
+              << "\t-m MONTH                 Month of task (default is system time)\n"
+              << "\t-y YEAR                  Year of task (default is system time)\n"
+              << "\t-s HH:MM                 Start time of task (default is 00:00)\n"
+              << "\t-e HH:MM                 End time of task (default is 23:59)"
+              << std::endl;
+    return 1;
+}
 
 
 int string_to_int(char string[]) {
@@ -13,103 +33,149 @@ int string_to_int(char string[]) {
 }
 
 
-void show_task(int argc, char *argv[]) {
-}
+int show_tasks(int argc, char *argv[]) {
+    std::ifstream database;
+    database.open(DATABASE_NAME, std::ios::binary);
+    if (!database) {
+        std::cerr << "Database can't be accessed." << std::endl;
+        return 1;
+    }
+
+    Date date;
+    int arg = 2;
+    while (arg < argc) {
+        std::string argument = argv[arg];
+
+        if (argument.rfind("-", 0) != 0) {
+            arg++;
+            continue;
+        }
+
+        if (argument == "-d") {
+            date.set_day(string_to_int(argv[arg + 1]));
+            arg += 2;
+        } else if (argument == "-m") {
+            date.set_month(string_to_int(argv[arg + 1]));
+            arg += 2;
+        } else if (argument == "-y") {
+            date.set_year(string_to_int(argv[arg + 1]));
+            arg += 2;
+        }
+    }
+
+    Task task;
+
+    std::ostringstream stream;
+    int number = 0;
+    while (database >> task) {
+        if (task.is_date_equal(date)) {
+            number++;
+            stream << number
+                   << " [" << task.start.format() << " - " << task.end.format() << "] "
+                   << task.title << '\n';
+	}
+    }
+    database.close();
+
+    if (number > 0) {
+        std::cout << "Tasks on " << date.date_format() << '\n' << stream.str();
+        return 0;
+    } else {
+        std::cerr << "Can't get tasks on " << date.date_format() << '.' << std::endl;
+        return 1;
+    }
+};
 
 
-void add_task(int argc, char *argv[]) {
-    struct Task task;
-    struct Date date;
+int add_task(int argc, char *argv[]) {
+    if (argc <= 2)
+        return show_usage(argv[0]);
+
+    Task task;
 
     int arg = 2;
     std::ostringstream title;
     bool stream_is_empty = true;
-    while (arg < argc - 1) {
+    while (arg < argc) {
         std::string argument = argv[arg];
 
-        if (argument == "--day") {
-            date.day = string_to_int(argv[arg + 1]);
-            arg += 2;
-        } else if (argument == "--month") {
-            date.month = string_to_int(argv[arg + 1]);
-            arg += 2;
-        } else if (argument == "--year") {
-            date.year = string_to_int(argv[arg + 1]);
-            arg += 2;
-        } else if (argument == "--start") {
-            std::tm start = {};
-            std::istringstream stream(argv[arg + 1]);
-            if (stream >> std::get_time(&start, "%H:%M"))
-                task.start_time = start;
-            arg += 2;
-        } else if (argument == "--end") {
-            std::tm end = {};
-            std::istringstream stream(argv[arg + 1]);
-            if (stream >> std::get_time(&end, "%H:%M"))
-                task.end_time = end;
-            arg += 2;
-        } else {
-            if (stream_is_empty) {
-                title << argv[arg];
-                stream_is_empty = false;
-            } else {
-                title << ' ' << argv[arg];
+        if (argument.rfind("-", 0) == 0) {
+            if (arg + 1 < argc) {
+                if (argument == "-d") {
+                    task.set_day(string_to_int(argv[arg + 1]));
+                    arg += 2;
+                } else if (argument == "-m") {
+                    task.set_month(string_to_int(argv[arg + 1]));
+                    arg += 2;
+                } else if (argument == "-y") {
+                    task.set_year(string_to_int(argv[arg + 1]));
+                    arg += 2;
+                } else if (argument == "-s") {
+                    std::tm start = {};
+                    std::istringstream stream(argv[arg + 1]);
+                    if (stream >> std::get_time(&start, "%H:%M")) {
+                        task.start = Time(start.tm_hour, start.tm_min);
+                    }
+                    arg += 2;
+                } else if (argument == "-e") {
+                    std::tm end = {};
+                    std::istringstream stream(argv[arg + 1]);
+                    if (stream >> std::get_time(&end, "%H:%M")) {
+                        task.end = Time(end.tm_hour, end.tm_min);
+                    }
+                    arg += 2;
+                }
             }
-            arg++;
+            continue;
         }
+        if (stream_is_empty) {
+            title << argv[arg];
+            stream_is_empty = false;
+        } else {
+            title << ' ' << argv[arg];
+        }
+        arg++;
     }
+
+    if (stream_is_empty)
+        return show_usage(argv[0]);
+
     task.title = title.str();
-    task.date = date;
+
+    std::ofstream database;
+    database.open(DATABASE_NAME, std::ios::binary | std::ios::app);
+    database << task;
+    std::cout << "Task successfully added on " << task.date_format() << " ("
+              << task.start.format() << " - " << task.end.format() << ')' << std::endl;
+    database.close();
+    return 0;
 }
 
 
-void edit_task(int argc, char *argv[]) {
-}
+int edit_task(int argc, char *argv[]) {
+    std::cerr << "Not implemented" << std::endl;
+    return 1;
+};
 
-
-void remove_task(int argc, char *argv[]) {
-}
-
-
-void show_usage(char *program_name) {
-    std::cerr << "Usage: " << program_name << " <command> [options]\n\n"
-              << "Commands:\n"
-              << "\tshow [options]          Show calendar\n"
-              << "\tadd <TITLE> [options]   Add task\n"
-              << "\tedit <ID> [options]     Edit task\n"
-              << "\tremove <ID>             Remove task\n"
-              << "\n"
-              << "Options:\n"
-              << "\t--day DAY\n"
-              << "\t--month MONTH\n"
-              << "\t--year YEAR\n"
-              << "\t--start HH:MM\n"
-              << "\t--end HH:MM\n"
-              << std::endl;
-}
+int remove_task(int argc, char *argv[]) {
+    std::cerr << "Not implemented" << std::endl;
+    return 1;
+};
 
 
 int main(int argc, char *argv[]) {
-    if (argc < 2) {
-        show_usage(argv[0]);
-        return 1;
-    }
+    if (argc < 2)
+        return show_usage(argv[0]);
 
     std::string command = argv[1];
-    if (command == "show") {
-        show_task(argc, argv);
-        return 0;
-    } else if (command == "add") {
-        add_task(argc, argv);
-        return 0;
-    } else if (command == "edit") {
-        edit_task(argc, argv);
-        return 0;
-    } else if (command == "remove") {
-        remove_task(argc, argv);
-        return 0;
-    } else {
-        show_usage(argv[0]);
-        return 1;
-    }
+    if (command == "show")
+        return show_tasks(argc, argv);
+    else if (command == "add")
+        return add_task(argc, argv);
+    else if (command == "edit")
+        return edit_task(argc, argv);
+    else if (command == "remove")
+        return remove_task(argc, argv);
+    else
+        return show_usage(argv[0]);
 }
