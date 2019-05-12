@@ -175,8 +175,79 @@ int add_task(int argc, char *argv[]) {
 
 
 int edit_task(int argc, char *argv[]) {
-    std::cerr << "Not implemented" << std::endl;
-    return 1;
+    if (argc <= 2)
+        return show_usage(argv[0]);
+
+    std::ifstream database;
+    database.open(DATABASE_NAME, std::ios::binary);
+
+    if (!database) {
+        std::cerr << "Database can't be accessed." << std::endl;
+        return 1;
+    }
+
+    const char temp_database_name[] = ".~" DATABASE_NAME;
+    std::ofstream temp_database;
+    temp_database.open(temp_database_name, std::ios::binary);
+
+    int task_id;
+    task_id = string_to_int(argv[2]);
+
+    Task task;
+    bool task_exists = false;
+    while (database >> task) {
+        if (task.id == task_id) {
+            task_exists = true;
+
+            int arg = 2;
+            while (arg < argc) {
+                std::string argument = argv[arg];
+
+                if (argument.rfind("-", 0) != 0) {
+                    arg++;
+                    continue;
+                }
+
+                if (argument == "-d") {
+                    task.set_day(string_to_int(argv[arg + 1]));
+                    arg += 2;
+                } else if (argument == "-m") {
+                    task.set_month(string_to_int(argv[arg + 1]));
+                    arg += 2;
+                } else if (argument == "-y") {
+                    task.set_year(string_to_int(argv[arg + 1]));
+                    arg += 2;
+                } else if (argument == "-s") {
+                    std::tm start = {};
+                    std::istringstream stream(argv[arg + 1]);
+                    if (stream >> std::get_time(&start, "%H:%M")) {
+                        task.start = Time(start.tm_hour, start.tm_min);
+                    }
+                    arg += 2;
+                } else if (argument == "-e") {
+                    std::tm end = {};
+                    std::istringstream stream(argv[arg + 1]);
+                    if (stream >> std::get_time(&end, "%H:%M")) {
+                        task.end = Time(end.tm_hour, end.tm_min);
+                    }
+                    arg += 2;
+                }
+            }
+        }
+        temp_database << task;
+    }
+
+    if (task_exists) {
+        remove(DATABASE_NAME);
+        rename(temp_database_name, DATABASE_NAME);
+        std::cout << "Task successfully edited." << std::endl;
+    } else {
+        std::cerr << "Can't edit task." << std::endl;
+    }
+
+    database.close();
+    temp_database.close();
+    return 0;
 };
 
 
