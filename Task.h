@@ -4,6 +4,7 @@
 
 
 struct Task: Date {
+    int id;
     Time start;
     Time end;
     std::string title;

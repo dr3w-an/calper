@@ -9,7 +9,10 @@ Task::Task():
 std::istream& operator >> (std::istream& stream, Task& task) {
     char separator;
 
-    if (stream >> task.year) {
+    if (stream >> task.id) {
+        stream >> separator;
+        stream >> task.year;
+
         int m;
         stream >> separator;
         stream >> m;
@@ -40,6 +43,8 @@ std::istream& operator >> (std::istream& stream, Task& task) {
 std::ostream& operator << (std::ostream& stream, Task& task) {
     const char separator = ',';
 
+    stream << task.id;
+    stream << separator;
     stream << task.year;
     stream << separator;
     stream << task.month;

@@ -1,6 +1,4 @@
-#define DATABASE_NAME "calper.dat"
-
-#include "Task.h"
+#include "main.h"
 #include <ctime>
 #include <fstream>
 #include <iomanip>
@@ -9,17 +7,17 @@
 int show_usage(char *program_name) {
     std::cerr << "Usage: " << program_name << " <command> [options]\n\n"
               << "Commands:\n"
-              << "\tshow [options]           Show tasks\n"
-              << "\tadd <TITLE> [options]    Add task\n"
-              << "\tedit <NUMBER> [options]  Edit task\n"
-              << "\tremove <NUMBER>          Remove task\n"
+              << "\tshow [options]         Show tasks\n"
+              << "\tadd <TITLE> [options]  Add task\n"
+              << "\tedit <ID> [options]    Edit task\n"
+              << "\tremove <ID>            Remove task\n"
               << "\n"
               << "Options:\n"
-              << "\t-d DAY                   Day of task (default is system time)\n"
-              << "\t-m MONTH                 Month of task (default is system time)\n"
-              << "\t-y YEAR                  Year of task (default is system time)\n"
-              << "\t-s HH:MM                 Start time of task (default is 00:00)\n"
-              << "\t-e HH:MM                 End time of task (default is 23:59)"
+              << "\t-d DAY                 Day of task (default is system time)\n"
+              << "\t-m MONTH               Month of task (default is system time)\n"
+              << "\t-y YEAR                Year of task (default is system time)\n"
+              << "\t-s HH:MM               Start time of task (default is 00:00)\n"
+              << "\t-e HH:MM               End time of task (default is 23:59)"
               << std::endl;
     return 1;
 }
@@ -70,8 +68,8 @@ int show_tasks(int argc, char *argv[]) {
     while (database >> task) {
         if (task.is_date_equal(date)) {
             number++;
-            stream << number
-                   << " [" << task.start.format() << " - " << task.end.format() << "] "
+            stream << task.id
+                   << " [" << task.start.format() << '-' << task.end.format() << "] "
                    << task.title << '\n';
 	}
     }
@@ -142,11 +140,35 @@ int add_task(int argc, char *argv[]) {
 
     task.title = title.str();
 
-    std::ofstream database;
-    database.open(DATABASE_NAME, std::ios::binary | std::ios::app);
-    database << task;
-    std::cout << "Task successfully added on " << task.date_format() << " ("
-              << task.start.format() << " - " << task.end.format() << ')' << std::endl;
+    std::fstream database;
+    database.open(DATABASE_NAME, std::ios::binary | std::ios::ate | std::ios::app | std::ios::in | std::ios::out);
+
+    if ((int)database.tellg() > 0) {
+        char ch;
+        do {
+            database.seekg(-2, std::ios_base::cur);
+            if ((int)database.tellg() <= 1) {
+                database.seekp(0, std::ios_base::beg);
+                break;
+            }
+            database.get(ch);
+        } while (ch != '\n');
+
+        int task_id;
+        database >> task_id;
+        task.id = task_id + 1;
+    } else {
+        task.id = 1;
+    }
+
+    if (database << task) {
+        std::cout << "Task successfully added on " << task.date_format() << " ("
+                  << task.start.format() << " - " << task.end.format() << ") with ID "
+                  << task.id << std::endl;
+    } else {
+        std::cerr << "Can't add task." << std::endl;
+    }
+
     database.close();
     return 0;
 }
