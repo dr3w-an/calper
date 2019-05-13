@@ -9,10 +9,10 @@ struct Date {
 
     public:
         Date();
-        Date(int d, int m, int y);
-        void set_year(int y);
-        void set_month(int m);
-        void set_day(int d);
+        Date(int year, int month, int day);
+        void set_year(int);
+        void set_month(int);
+        void set_day(int);
         bool is_date_equal(Date&);
         std::string date_format();
 };
