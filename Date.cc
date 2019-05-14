@@ -87,19 +87,17 @@ void Date::set_day(int d) {
 }
 
 
-bool Date::is_date_equal(Date& date) {
+bool Date::is_date_equal(Date &date) const {
     return (year == date.year && (date.month == 0 || (month == date.month && (date.day == 0 || day == date.day))));
 }
 
 
-std::string Date::date_format() {
+std::string Date::date_format() const {
     std::ostringstream stream;
     stream << year;
-    if (month != 0) {
+    if (month != 0)
         stream << '-' << std::setfill('0') << std::setw(2) << month;
-    }
-    if (day != 0) {
+    if (day != 0)
         stream << '-' << std::setfill('0') << std::setw(2) << day;
-    }
     return stream.str();
 }

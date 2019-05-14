@@ -221,6 +221,9 @@ int edit_task(int argc, char *argv[]) {
     if (argc <= 2)
         return show_usage(argv[0]);
 
+    int task_id;
+    task_id = string_to_int(argv[2]);
+
     std::ifstream database;
     database.open(DATABASE_NAME, std::ios::binary);
 
@@ -232,9 +235,6 @@ int edit_task(int argc, char *argv[]) {
     const char temp_database_name[] = ".~" DATABASE_NAME;
     std::ofstream temp_database;
     temp_database.open(temp_database_name, std::ios::binary);
-
-    int task_id;
-    task_id = string_to_int(argv[2]);
 
     Task task;
     bool task_exists = false;
@@ -296,6 +296,9 @@ int remove_task(int argc, char *argv[]) {
     if (argc <= 2)
         return show_usage(argv[0]);
 
+    int task_id;
+    task_id = string_to_int(argv[2]);
+
     std::ifstream database;
     database.open(DATABASE_NAME, std::ios::binary);
 
@@ -307,9 +310,6 @@ int remove_task(int argc, char *argv[]) {
     const char temp_database_name[] = ".~" DATABASE_NAME;
     std::ofstream temp_database;
     temp_database.open(temp_database_name, std::ios::binary);
-
-    int task_id;
-    task_id = string_to_int(argv[2]);
 
     Task task;
     bool task_exists = false;

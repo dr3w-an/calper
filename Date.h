@@ -1,7 +1,7 @@
 #include <string>
 
 
-struct Date {
+class Date {
     protected:
         int year;
         int month;
@@ -9,6 +9,7 @@ struct Date {
 
     public:
         Date();
+
         void today();
         void set_year();
         void set_year(int);
@@ -16,6 +17,7 @@ struct Date {
         void set_month(int);
         void set_day();
         void set_day(int);
-        bool is_date_equal(Date&);
-        std::string date_format();
+
+        bool is_date_equal(Date&) const;
+        std::string date_format() const;
 };

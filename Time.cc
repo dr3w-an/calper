@@ -15,7 +15,7 @@ Time::Time(int h, int m) {
 }
 
 
-std::string Time::format() {
+std::string Time::format() const {
     std::ostringstream stream;
     stream << std::setfill('0') << std::setw(2) << hours << ':'
            << std::setfill('0') << std::setw(2) << min;
@@ -36,9 +36,11 @@ bool operator <= (Time& time_1, Time& time_2) {
 std::istream& operator >> (std::istream& stream, Time& time) {
     int hours, min;
     char separator;
+
     stream >> hours;
     stream >> separator;
     stream >> min;
+
     time = Time(hours, min);
     return stream;
 }
@@ -46,8 +48,10 @@ std::istream& operator >> (std::istream& stream, Time& time) {
 
 std::ostream& operator << (std::ostream& stream, Time& time) {
     const char separator = ':';
+
     stream << time.hours;
     stream << separator;
     stream << time.min;
+
     return stream;
 }

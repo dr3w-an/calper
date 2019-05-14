@@ -23,7 +23,7 @@ void Task::set_end(Time& time) {
 }
 
 
-std::string Task::format() {
+std::string Task::format() const {
     std::ostringstream stream;
     stream << date_format() << " (" << start.format() << '-' << end.format() << ")";
     return stream.str();
