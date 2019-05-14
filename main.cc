@@ -113,8 +113,7 @@ int show_tasks(int argc, char *argv[]) {
     database.seekg(0, std::ios_base::beg);
     while (database >> task) {
         if (task.is_date_equal(date)) {
-            stream << std::setw(digits) << task.id << ' ' << task.date_format()
-                   << " (" << task.start.format() << '-' << task.end.format() << ") "
+            stream << std::setw(digits) << task.id << ' ' << task.format() << ' '
                    << task.title << '\n';
 	}
     }
@@ -156,18 +155,16 @@ int add_task(int argc, char *argv[]) {
                     task.set_day(string_to_int(argv[arg + 1]));
                     arg += 2;
                 } else if (argument == "-s") {
-                    std::tm start = {};
+                    Time start;
                     std::istringstream stream(argv[arg + 1]);
-                    if (stream >> std::get_time(&start, "%H:%M")) {
-                        task.start = Time(start.tm_hour, start.tm_min);
-                    }
+                    stream >> start;
+                    task.set_start(start);
                     arg += 2;
                 } else if (argument == "-e") {
-                    std::tm end = {};
+                    Time end;
                     std::istringstream stream(argv[arg + 1]);
-                    if (stream >> std::get_time(&end, "%H:%M")) {
-                        task.end = Time(end.tm_hour, end.tm_min);
-                    }
+                    stream >> end;
+                    task.set_end(end);
                     arg += 2;
                 }
             }
@@ -209,8 +206,7 @@ int add_task(int argc, char *argv[]) {
     }
 
     if (database << task) {
-        std::cout << "Task successfully added on " << task.date_format() << " ("
-                  << task.start.format() << '-' << task.end.format() << ") with ID "
+        std::cout << "Task successfully added on " << task.format() << " with ID "
                   << task.id << std::endl;
     } else {
         std::cerr << "Can't add task." << std::endl;
@@ -255,28 +251,26 @@ int edit_task(int argc, char *argv[]) {
                     continue;
                 }
 
-                if (argument == "-d") {
+                if (argument == "-y") {
                     task.set_year(string_to_int(argv[arg + 1]));
                     arg += 2;
                 } else if (argument == "-m") {
                     task.set_month(string_to_int(argv[arg + 1]));
                     arg += 2;
-                } else if (argument == "-y") {
+                } else if (argument == "-d") {
                     task.set_day(string_to_int(argv[arg + 1]));
                     arg += 2;
                 } else if (argument == "-s") {
-                    std::tm start = {};
+                    Time start;
                     std::istringstream stream(argv[arg + 1]);
-                    if (stream >> std::get_time(&start, "%H:%M")) {
-                        task.start = Time(start.tm_hour, start.tm_min);
-                    }
+                    stream >> start;
+                    task.set_start(start);
                     arg += 2;
                 } else if (argument == "-e") {
-                    std::tm end = {};
+                    Time end;
                     std::istringstream stream(argv[arg + 1]);
-                    if (stream >> std::get_time(&end, "%H:%M")) {
-                        task.end = Time(end.tm_hour, end.tm_min);
-                    }
+                    stream >> end;
+                    task.set_end(end);
                     arg += 2;
                 }
             }

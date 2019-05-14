@@ -4,13 +4,18 @@
 
 
 struct Task: Date {
-    int id;
-    Time start;
-    Time end;
-    std::string title;
+    private:
+        Time start;
+        Time end;
 
-    Task();
-    void display();
-    friend std::istream& operator >> (std::istream&, Task&);
-    friend std::ostream& operator << (std::ostream&, Task&);
+    public:
+        int id;
+        std::string title;
+
+        Task();
+        void set_start(Time&);
+        void set_end(Time&);
+        std::string format();
+        friend std::istream& operator >> (std::istream&, Task&);
+        friend std::ostream& operator << (std::ostream&, Task&);
 };

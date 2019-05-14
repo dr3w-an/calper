@@ -23,6 +23,16 @@ std::string Time::format() {
 }
 
 
+bool operator >= (Time& time_1, Time& time_2) {
+    return (time_1.hours > time_2.hours || (time_1.hours == time_2.hours && time_1.min >= time_2.min));
+}
+
+
+bool operator <= (Time& time_1, Time& time_2) {
+    return (time_1.hours < time_2.hours || (time_1.hours == time_2.hours && time_1.min <= time_2.min));
+}
+
+
 std::istream& operator >> (std::istream& stream, Time& time) {
     int hours, min;
     char separator;

@@ -7,6 +7,29 @@ Task::Task():
 {}
 
 
+void Task::set_start(Time& time) {
+    if (time >= end)
+        throw std::invalid_argument("start must be before end");
+    else
+        start = time;
+}
+
+
+void Task::set_end(Time& time) {
+    if (time <= start)
+        throw std::invalid_argument("end must be after start");
+    else
+        end = time;
+}
+
+
+std::string Task::format() {
+    std::ostringstream stream;
+    stream << date_format() << " (" << start.format() << '-' << end.format() << ")";
+    return stream.str();
+}
+
+
 std::istream& operator >> (std::istream& stream, Task& task) {
     char separator;
 
