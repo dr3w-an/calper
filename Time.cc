@@ -14,12 +14,14 @@ Time::Time(int h, int m) {
         min = m;
 }
 
+
 std::string Time::format() {
     std::ostringstream stream;
     stream << std::setfill('0') << std::setw(2) << hours << ':'
            << std::setfill('0') << std::setw(2) << min;
     return stream.str();
 }
+
 
 std::istream& operator >> (std::istream& stream, Time& time) {
     int hours, min;
@@ -30,6 +32,7 @@ std::istream& operator >> (std::istream& stream, Time& time) {
     time = Time(hours, min);
     return stream;
 }
+
 
 std::ostream& operator << (std::ostream& stream, Time& time) {
     const char separator = ':';

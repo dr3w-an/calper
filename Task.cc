@@ -6,6 +6,7 @@ Task::Task():
     start(0, 0), end(23, 59)
 {}
 
+
 std::istream& operator >> (std::istream& stream, Task& task) {
     char separator;
 
@@ -39,6 +40,7 @@ std::istream& operator >> (std::istream& stream, Task& task) {
 
     return stream;
 }
+
 
 std::ostream& operator << (std::ostream& stream, Task& task) {
     const char separator = ',';

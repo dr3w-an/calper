@@ -2,46 +2,104 @@
 #include <iomanip>
 
 
-Date::Date() {
+Date::Date():
+    month(0), day(0)
+{}
+
+
+void Date::today() {
+    set_year();
+    set_month();
+    set_day();
+}
+
+
+void Date::set_year() {
     time_t now = time(0);
     tm *date = localtime(&now);
     year = date->tm_year + 1900;
+}
+
+
+void Date::set_year(int y) {
+    if (y < 1) {
+        throw std::invalid_argument("year must be a number greater or equal than 1");
+    } else if (y != year) {
+        year = y;
+        if (day != 0) set_day(day);
+    }
+}
+
+
+void Date::set_month() {
+    time_t now = time(0);
+    tm *date = localtime(&now);
     month = date->tm_mon + 1;
+}
+
+
+void Date::set_month(int m) {
+    if (m < 1 || m > 12) {
+        throw std::invalid_argument("month must be a number in range from 1 to 12");
+    } else if (m != month) {
+        month = m;
+        if (day != 0) set_day(day);
+    }
+}
+
+
+void Date::set_day() {
+    time_t now = time(0);
+    tm *date = localtime(&now);
     day = date->tm_mday;
 }
 
-Date::Date(int y, int m, int d) {
-    set_month(m);
-    set_day(d);
-    year = y;
-}
-
-void Date::set_year(int y) {
-    year = y;
-}
-
-void Date::set_month(int m) {
-    if (m < 1 || m > 12)
-        throw std::invalid_argument("month must be a number in range from 1 to 12");
-    else
-        month = m;
-}
 
 void Date::set_day(int d) {
-    if (d < 1 || d > 31)
-        throw std::invalid_argument("day must be a number in range from 1 to 31");
-    else
+    int max_limit;
+
+    switch (month) {
+        case 2:
+            if ((year % 400 == 0) || ((year % 4 == 0) && (year % 100 != 0))) {
+                max_limit = 29;
+            } else {
+                max_limit = 28;
+            }
+            break;
+        case 4:
+        case 6:
+        case 9:
+        case 11:
+            max_limit = 30;
+            break;
+        default:
+            max_limit = 31;
+            break;
+    }
+
+    if (d < 1 || d > max_limit) {
+        std::ostringstream error_message;
+        error_message << "day must be a number in range from 1 to " << max_limit;
+        throw std::invalid_argument(error_message.str());
+    } else {
         day = d;
+    }
 }
 
+
 bool Date::is_date_equal(Date& date) {
-    return (year == date.year && month == date.month && day == date.day);
+    return (year == date.year && (date.month == 0 || (month == date.month && (date.day == 0 || day == date.day))));
 }
+
 
 std::string Date::date_format() {
     std::ostringstream stream;
-    stream << year << '-'
-           << std::setfill('0') << std::setw(2) << month << '-'
-           << std::setfill('0') << std::setw(2) << day;
+    stream << year;
+    if (month != 0) {
+        stream << '-' << std::setfill('0') << std::setw(2) << month;
+    }
+    if (day != 0) {
+        stream << '-' << std::setfill('0') << std::setw(2) << day;
+    }
     return stream.str();
 }
