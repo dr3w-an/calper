@@ -18,6 +18,6 @@ class Date {
         void set_day();
         void set_day(int);
 
-        bool is_date_equal(Date&) const;
+        bool is_date_equal(Date &) const;
         std::string date_format() const;
 };

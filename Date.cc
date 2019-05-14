@@ -14,9 +14,14 @@ void Date::today() {
 }
 
 
-void Date::set_year() {
+tm *current_tm() {
     time_t now = time(0);
-    tm *date = localtime(&now);
+    return localtime(&now);
+}
+
+
+void Date::set_year() {
+    tm *date = current_tm();
     year = date->tm_year + 1900;
 }
 
@@ -32,8 +37,7 @@ void Date::set_year(int y) {
 
 
 void Date::set_month() {
-    time_t now = time(0);
-    tm *date = localtime(&now);
+    tm *date = current_tm();
     month = date->tm_mon + 1;
 }
 
@@ -49,8 +53,7 @@ void Date::set_month(int m) {
 
 
 void Date::set_day() {
-    time_t now = time(0);
-    tm *date = localtime(&now);
+    tm *date = current_tm();
     day = date->tm_mday;
 }
 

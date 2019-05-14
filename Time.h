@@ -7,12 +7,12 @@ class Time {
 
     public:
         Time() = default;
-        Time(int h, int m);
+        Time(int hours, int min);
 
         std::string format() const;
 
-        friend bool operator >= (Time& time_1, Time& time_2);
-        friend bool operator <= (Time& time_1, Time& time_2);
-        friend std::istream& operator >> (std::istream& stream, Time& time);
-        friend std::ostream& operator << (std::ostream& stream, Time& time);
+        friend bool operator >= (Time &, Time &);
+        friend bool operator <= (Time &, Time &);
+        friend std::istream &operator >> (std::istream &, Time &);
+        friend std::ostream &operator << (std::ostream &, Time &);
 };

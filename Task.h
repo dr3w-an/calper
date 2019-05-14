@@ -13,11 +13,11 @@ class Task: public Date {
 
         Task();
 
-        void set_start(Time&);
-        void set_end(Time&);
+        void set_start(Time &);
+        void set_end(Time &);
 
         std::string format() const;
 
-        friend std::istream& operator >> (std::istream&, Task&);
-        friend std::ostream& operator << (std::ostream&, Task&);
+        friend std::istream &operator >> (std::istream &, Task &);
+        friend std::ostream &operator << (std::ostream &, Task &);
 };
