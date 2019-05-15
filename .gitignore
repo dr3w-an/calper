@@ -20,7 +20,7 @@
 *.a
 
 # Executables
-*.out
+calper
 
 # Project files
 *.dat
