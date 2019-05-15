@@ -18,6 +18,7 @@ class Task: public Date {
 
         std::string format() const;
 
+        bool operator < (const Task &) const;
         friend std::istream &operator >> (std::istream &, Task &);
         friend std::ostream &operator << (std::ostream &, Task &);
 };

@@ -30,6 +30,18 @@ std::string Task::format() const {
 }
 
 
+bool Task::operator < (const Task &task) const {
+    return (
+        year < task.year ||
+        month < task.month ||
+        day < task.day ||
+        start < task.start ||
+        end < task.end ||
+        id < task.id
+    );
+}
+
+
 std::istream &operator >> (std::istream &stream, Task &task) {
     char separator;
 

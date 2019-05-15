@@ -1,7 +1,9 @@
 #include "main.h"
+#include <algorithm>
 #include <ctime>
 #include <fstream>
 #include <iomanip>
+#include <vector>
 
 
 int show_usage(char *program_name) {
@@ -89,39 +91,35 @@ int show_tasks(int argc, char *argv[]) {
         return 1;
     }
 
-    char ch;
-    do {
-        database.seekg(-2, std::ios_base::cur);
-        if ((int)database.tellg() <= 1) {
-            database.seekg(0, std::ios_base::beg);
-            break;
-        }
-        database.get(ch);
-    } while (ch != '\n');
+    std::vector<Task> task_vector = {};
+    int max_task_id = 0;
 
-    int task_id;
-    database >> task_id;
-
-    int digits = 0;
-    while (task_id) {
-        task_id /= 10;
-        digits++;
-    }
-
-    Task task;
-    std::ostringstream stream;
     database.seekg(0, std::ios_base::beg);
-    while (database >> task) {
-        if (task.is_date_equal(date)) {
-            stream << std::setw(digits) << task.id << ' ' << task.format() << ' '
-                   << task.title << '\n';
+    bool task_read = true;
+    while (task_read) {
+        Task task;
+        task_read = static_cast<bool>(database >> task);
+        if (task_read && task.is_date_equal(date)) {
+            task_vector.push_back(task);
+            if (task.id > max_task_id) max_task_id = task.id;
 	}
     }
     database.close();
 
-    std::string task_list = stream.str();
-    if (!task_list.empty()) {
-        std::cout << "Tasks on " << date.date_format() << '\n' << task_list;
+    std::sort(task_vector.begin(), task_vector.end());
+
+    int id_space = 0;
+    while (max_task_id) {
+        max_task_id /= 10;
+        id_space++;
+    }
+
+    if (!task_vector.empty()) {
+        std::cout << "Tasks on " << date.date_format() << '\n';
+        for (Task task: task_vector) {
+            std::cout << std::setw(id_space) << task.id << ' ' << task.format() << ' '
+                      << task.title << '\n';
+        }
         return 0;
     } else {
         std::cerr << "Can't get tasks on " << date.date_format() << '.' << std::endl;
@@ -236,10 +234,12 @@ int edit_task(int argc, char *argv[]) {
     std::ofstream temp_database;
     temp_database.open(temp_database_name, std::ios::binary);
 
-    Task task;
+    bool task_read = true;
     bool task_exists = false;
-    while (database >> task) {
-        if (task.id == task_id) {
+    while (task_read) {
+        Task task;
+        task_read = static_cast<bool>(database >> task);
+        if (task_read && task.id == task_id) {
             task_exists = true;
 
             int arg = 2;
@@ -311,10 +311,12 @@ int remove_task(int argc, char *argv[]) {
     std::ofstream temp_database;
     temp_database.open(temp_database_name, std::ios::binary);
 
-    Task task;
+    bool task_read = true;
     bool task_exists = false;
-    while (database >> task) {
-        if (task.id != task_id) {
+    while (task_read) {
+        Task task;
+        task_read = static_cast<bool>(database >> task);
+        if (task_read && task.id != task_id) {
             temp_database << task;
 	} else {
             task_exists = true;
