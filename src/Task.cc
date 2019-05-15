@@ -3,7 +3,7 @@
 
 
 Task::Task():
-    start(0, 0), end(23, 59)
+    start(0, 0), end(23, 59), done(false)
 {}
 
 
@@ -46,6 +46,9 @@ std::istream &operator >> (std::istream &stream, Task &task) {
     char separator;
 
     if (stream >> task.id) {
+        stream >> separator;
+        stream >> task.done;
+
         int y;
         stream >> separator;
         stream >> y;
@@ -88,6 +91,8 @@ std::ostream &operator << (std::ostream &stream, Task &task) {
     const char separator = ',';
 
     stream << task.id;
+    stream << separator;
+    stream << (int)task.done;
     stream << separator;
     stream << task.year;
     stream << separator;

@@ -19,7 +19,8 @@ int show_usage(char *program_name) {
               << "\t-m MONTH               Month of task (default is system time)\n"
               << "\t-y YEAR                Year of task (default is system time)\n"
               << "\t-s HH:MM               Start time of task (default is 00:00)\n"
-              << "\t-e HH:MM               End time of task (default is 23:59)"
+              << "\t-e HH:MM               End time of task (default is 23:59)\n"
+              << "\t-x                     Task is done (default is false)"
               << std::endl;
     return 1;
 }
@@ -117,8 +118,9 @@ int show_tasks(int argc, char *argv[]) {
     if (!task_vector.empty()) {
         std::cout << "Tasks on " << date.date_format() << '\n';
         for (Task task: task_vector) {
-            std::cout << std::setw(id_space) << task.id << ' ' << task.format() << ' '
-                      << task.title << '\n';
+            char mark = task.done ? 'x' : ' ';
+            std::cout << '[' << mark << "] " << std::setw(id_space) << task.id << ' '
+                      << task.format() << ' ' << task.title << '\n';
         }
         return 0;
     } else {
@@ -142,29 +144,30 @@ int add_task(int argc, char *argv[]) {
         std::string argument = argv[arg];
 
         if (argument.rfind("-", 0) == 0) {
-            if (arg + 1 < argc) {
-                if (argument == "-y") {
-                    task.set_year(string_to_int(argv[arg + 1]));
-                    arg += 2;
-                } else if (argument == "-m") {
-                    task.set_month(string_to_int(argv[arg + 1]));
-                    arg += 2;
-                } else if (argument == "-d") {
-                    task.set_day(string_to_int(argv[arg + 1]));
-                    arg += 2;
-                } else if (argument == "-s") {
-                    Time start;
-                    std::istringstream stream(argv[arg + 1]);
-                    stream >> start;
-                    task.set_start(start);
-                    arg += 2;
-                } else if (argument == "-e") {
-                    Time end;
-                    std::istringstream stream(argv[arg + 1]);
-                    stream >> end;
-                    task.set_end(end);
-                    arg += 2;
-                }
+            if (argument == "-y") {
+                task.set_year(string_to_int(argv[arg + 1]));
+                arg += 2;
+            } else if (argument == "-m") {
+                task.set_month(string_to_int(argv[arg + 1]));
+                arg += 2;
+            } else if (argument == "-d") {
+                task.set_day(string_to_int(argv[arg + 1]));
+                arg += 2;
+            } else if (argument == "-s") {
+                Time start;
+                std::istringstream stream(argv[arg + 1]);
+                stream >> start;
+                task.set_start(start);
+                arg += 2;
+            } else if (argument == "-e") {
+                Time end;
+                std::istringstream stream(argv[arg + 1]);
+                stream >> end;
+                task.set_end(end);
+                arg += 2;
+            } else if (argument == "-x") {
+                task.done = true;
+                arg += 1;
             }
             continue;
         }
@@ -233,49 +236,62 @@ int edit_task(int argc, char *argv[]) {
     const char temp_database_name[] = ".~" DATABASE_NAME;
     std::ofstream temp_database;
     temp_database.open(temp_database_name, std::ios::binary);
+    std::ostringstream title;
 
     bool task_read = true;
     bool task_exists = false;
+    bool stream_is_empty = true;
     while (task_read) {
         Task task;
         task_read = static_cast<bool>(database >> task);
-        if (task_read && task.id == task_id) {
-            task_exists = true;
+        if (task_read) {
+            if (task.id == task_id) {
+                task_exists = true;
 
-            int arg = 2;
-            while (arg < argc) {
-                std::string argument = argv[arg];
+                int arg = 3;
+                while (arg < argc) {
+                    std::string argument = argv[arg];
 
-                if (argument.rfind("-", 0) != 0) {
+                    if (argument.rfind("-", 0) == 0) {
+                        if (argument == "-y") {
+                            task.set_year(string_to_int(argv[arg + 1]));
+                            arg += 2;
+                        } else if (argument == "-m") {
+                            task.set_month(string_to_int(argv[arg + 1]));
+                            arg += 2;
+                        } else if (argument == "-d") {
+                            task.set_day(string_to_int(argv[arg + 1]));
+                            arg += 2;
+                        } else if (argument == "-s") {
+                            Time start;
+                            std::istringstream stream(argv[arg + 1]);
+                            stream >> start;
+                            task.set_start(start);
+                            arg += 2;
+                        } else if (argument == "-e") {
+                            Time end;
+                            std::istringstream stream(argv[arg + 1]);
+                            stream >> end;
+                            task.set_end(end);
+                            arg += 2;
+                        } else if (argument == "-x") {
+                            task.done = true;
+                            arg += 1;
+                        }
+                        continue;
+                    }
+                    if (stream_is_empty) {
+                        title << argv[arg];
+                        stream_is_empty = false;
+                    } else {
+                        title << ' ' << argv[arg];
+                    }
                     arg++;
-                    continue;
                 }
-
-                if (argument == "-y") {
-                    task.set_year(string_to_int(argv[arg + 1]));
-                    arg += 2;
-                } else if (argument == "-m") {
-                    task.set_month(string_to_int(argv[arg + 1]));
-                    arg += 2;
-                } else if (argument == "-d") {
-                    task.set_day(string_to_int(argv[arg + 1]));
-                    arg += 2;
-                } else if (argument == "-s") {
-                    Time start;
-                    std::istringstream stream(argv[arg + 1]);
-                    stream >> start;
-                    task.set_start(start);
-                    arg += 2;
-                } else if (argument == "-e") {
-                    Time end;
-                    std::istringstream stream(argv[arg + 1]);
-                    stream >> end;
-                    task.set_end(end);
-                    arg += 2;
-                }
+                if (!stream_is_empty) task.title = title.str();
             }
+            temp_database << task;
         }
-        temp_database << task;
     }
 
     if (task_exists) {

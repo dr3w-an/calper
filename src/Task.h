@@ -9,6 +9,7 @@ class Task: public Date {
 
     public:
         int id;
+        bool done;
         std::string title;
 
         Task();
