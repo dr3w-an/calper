@@ -32,12 +32,15 @@ std::string Task::format() const {
 
 bool Task::operator < (const Task &task) const {
     return (
-        year < task.year ||
-        month < task.month ||
-        day < task.day ||
-        start < task.start ||
-        end < task.end ||
-        id < task.id
+        year < task.year || (year == task.year && (month < task.month ||
+            (month == task.month && (day < task.day ||
+                (day == task.day && (start < task.start ||
+                    (start == task.start && (end < task.end ||
+                        (end == task.end && (id < task.id))
+                    ))
+                ))
+            ))
+        ))
     );
 }
 

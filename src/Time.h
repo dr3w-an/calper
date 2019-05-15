@@ -11,6 +11,7 @@ class Time {
 
         std::string format() const;
 
+        bool operator == (const Time &) const;
         bool operator >= (const Time &) const;
         bool operator <  (const Time &) const;
         bool operator <= (const Time &) const;
