@@ -34,8 +34,10 @@ std::istream &operator >> (std::istream &stream, Task &task) {
     char separator;
 
     if (stream >> task.id) {
+        int y;
         stream >> separator;
-        stream >> task.year;
+        stream >> y;
+        task.set_year(y);
 
         int m;
         stream >> separator;
@@ -47,10 +49,15 @@ std::istream &operator >> (std::istream &stream, Task &task) {
         stream >> d;
         task.set_day(d);
 
+        Time start;
         stream >> separator;
-        stream >> task.start;
+        stream >> start;
+        task.set_start(start);
+
+        Time end;
         stream >> separator;
-        stream >> task.end;
+        stream >> end;
+        task.set_end(end);
 
         size_t title_size;
         stream >> separator;
