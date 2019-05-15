@@ -275,7 +275,7 @@ int edit_task(int argc, char *argv[]) {
                             task.set_end(end);
                             arg += 2;
                         } else if (argument == "-x") {
-                            task.done = true;
+                            task.done = not task.done;
                             arg += 1;
                         }
                         continue;
