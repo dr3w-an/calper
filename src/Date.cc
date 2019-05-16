@@ -81,8 +81,8 @@ void Date::set_day(int d) {
     }
 
     if (d < 1 || d > max_limit) {
-        std::ostringstream error_message;
-        error_message << "day must be a number in range from 1 to " << max_limit;
+        std::ostringstream error_message("day must be a number in range from 1 to ");
+        error_message << max_limit;
         throw std::invalid_argument(error_message.str());
     } else {
         day = d;
@@ -90,7 +90,7 @@ void Date::set_day(int d) {
 }
 
 
-bool Date::is_date_equal(Date &date) const {
+bool Date::is_date_equal(const Date &date) const {
     return (year == date.year && (date.month == 0 || (month == date.month && (date.day == 0 || day == date.day))));
 }
 

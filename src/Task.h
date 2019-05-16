@@ -14,12 +14,12 @@ class Task: public Date {
 
         Task();
 
-        void set_start(Time &);
-        void set_end(Time &);
+        void set_start(const Time &);
+        void set_end(const Time &);
 
         std::string format() const;
 
         bool operator < (const Task &) const;
         friend std::istream &operator >> (std::istream &, Task &);
-        friend std::ostream &operator << (std::ostream &, Task &);
+        friend std::ostream &operator << (std::ostream &, const Task &);
 };

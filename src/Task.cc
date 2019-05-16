@@ -7,7 +7,7 @@ Task::Task():
 {}
 
 
-void Task::set_start(Time &time) {
+void Task::set_start(const Time &time) {
     if (time >= end)
         throw std::invalid_argument("start must be before end");
     else
@@ -15,7 +15,7 @@ void Task::set_start(Time &time) {
 }
 
 
-void Task::set_end(Time &time) {
+void Task::set_end(const Time &time) {
     if (time <= start)
         throw std::invalid_argument("end must be after start");
     else
@@ -90,22 +90,18 @@ std::istream &operator >> (std::istream &stream, Task &task) {
 }
 
 
-std::ostream &operator << (std::ostream &stream, Task &task) {
-    const char separator = ',';
+std::ostream &operator << (std::ostream &stream, const Task &task) {
+    char separator = ',';
 
     stream << task.id;
     stream << separator;
     stream << (int)task.done;
     stream << separator;
-    stream << task.year;
+    stream << task.date_format();
     stream << separator;
-    stream << task.month;
+    stream << task.start.format();
     stream << separator;
-    stream << task.day;
-    stream << separator;
-    stream << task.start;
-    stream << separator;
-    stream << task.end;
+    stream << task.end.format();
     stream << separator;
     stream << task.title.size();
     stream << separator;

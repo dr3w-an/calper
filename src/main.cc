@@ -26,14 +26,6 @@ int show_usage(char *program_name) {
 }
 
 
-int string_to_int(char string[]) {
-    int result;
-    std::istringstream stringstream(string);
-    stringstream >> result;
-    return result;
-}
-
-
 int show_tasks(int argc, char *argv[]) {
     int year, month, day;
     bool year_specified = false;
@@ -44,21 +36,21 @@ int show_tasks(int argc, char *argv[]) {
     while (arg < argc) {
         std::string argument = argv[arg];
 
-        if (argument.rfind("-", 0) != 0) {
+        if (argument[0] != '-') {
             arg++;
             continue;
         }
 
         if (argument == "-y") {
-            year = string_to_int(argv[arg + 1]);
+            year = atoi(argv[arg + 1]);
             year_specified = true;
             arg += 2;
         } else if (argument == "-m") {
-            month = string_to_int(argv[arg + 1]);
+            month = atoi(argv[arg + 1]);
             month_specified = true;
             arg += 2;
         } else if (argument == "-d") {
-            day = string_to_int(argv[arg + 1]);
+            day = atoi(argv[arg + 1]);
             day_specified = true;
             arg += 2;
         }
@@ -82,7 +74,7 @@ int show_tasks(int argc, char *argv[]) {
         date.set_day();
 
     std::ifstream database;
-    database.open(DATABASE_NAME, std::ios::binary | std::ios::ate);
+    database.open(DATABASE_NAME, std::ios::ate);
     if (!database) {
         std::cerr << "Database can't be accessed." << std::endl;
         return 1;
@@ -143,15 +135,15 @@ int add_task(int argc, char *argv[]) {
     while (arg < argc) {
         std::string argument = argv[arg];
 
-        if (argument.rfind("-", 0) == 0) {
+        if (argument[0] == '-') {
             if (argument == "-y") {
-                task.set_year(string_to_int(argv[arg + 1]));
+                task.set_year(atoi(argv[arg + 1]));
                 arg += 2;
             } else if (argument == "-m") {
-                task.set_month(string_to_int(argv[arg + 1]));
+                task.set_month(atoi(argv[arg + 1]));
                 arg += 2;
             } else if (argument == "-d") {
-                task.set_day(string_to_int(argv[arg + 1]));
+                task.set_day(atoi(argv[arg + 1]));
                 arg += 2;
             } else if (argument == "-s") {
                 Time start;
@@ -186,7 +178,7 @@ int add_task(int argc, char *argv[]) {
     task.title = title.str();
 
     std::fstream database;
-    database.open(DATABASE_NAME, std::ios::binary | std::ios::ate | std::ios::app | std::ios::in | std::ios::out);
+    database.open(DATABASE_NAME, std::ios::ate | std::ios::app | std::ios::in | std::ios::out);
 
     if ((int)database.tellg() > 0) {
         char ch;
@@ -223,10 +215,10 @@ int edit_task(int argc, char *argv[]) {
         return show_usage(argv[0]);
 
     int task_id;
-    task_id = string_to_int(argv[2]);
+    task_id = atoi(argv[2]);
 
     std::ifstream database;
-    database.open(DATABASE_NAME, std::ios::binary);
+    database.open(DATABASE_NAME);
 
     if (!database) {
         std::cerr << "Database can't be accessed." << std::endl;
@@ -235,7 +227,7 @@ int edit_task(int argc, char *argv[]) {
 
     const char temp_database_name[] = ".~" DATABASE_NAME;
     std::ofstream temp_database;
-    temp_database.open(temp_database_name, std::ios::binary);
+    temp_database.open(temp_database_name);
     std::ostringstream title;
 
     bool task_read = true;
@@ -252,15 +244,15 @@ int edit_task(int argc, char *argv[]) {
                 while (arg < argc) {
                     std::string argument = argv[arg];
 
-                    if (argument.rfind("-", 0) == 0) {
+                    if (argument[0] == '-') {
                         if (argument == "-y") {
-                            task.set_year(string_to_int(argv[arg + 1]));
+                            task.set_year(atoi(argv[arg + 1]));
                             arg += 2;
                         } else if (argument == "-m") {
-                            task.set_month(string_to_int(argv[arg + 1]));
+                            task.set_month(atoi(argv[arg + 1]));
                             arg += 2;
                         } else if (argument == "-d") {
-                            task.set_day(string_to_int(argv[arg + 1]));
+                            task.set_day(atoi(argv[arg + 1]));
                             arg += 2;
                         } else if (argument == "-s") {
                             Time start;
@@ -313,10 +305,10 @@ int remove_task(int argc, char *argv[]) {
         return show_usage(argv[0]);
 
     int task_id;
-    task_id = string_to_int(argv[2]);
+    task_id = atoi(argv[2]);
 
     std::ifstream database;
-    database.open(DATABASE_NAME, std::ios::binary);
+    database.open(DATABASE_NAME);
 
     if (!database) {
         std::cerr << "Database can't be accessed." << std::endl;
@@ -325,7 +317,7 @@ int remove_task(int argc, char *argv[]) {
 
     const char temp_database_name[] = ".~" DATABASE_NAME;
     std::ofstream temp_database;
-    temp_database.open(temp_database_name, std::ios::binary);
+    temp_database.open(temp_database_name);
 
     bool task_read = true;
     bool task_exists = false;

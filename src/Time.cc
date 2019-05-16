@@ -44,24 +44,13 @@ bool Time::operator <= (const Time &time) const {
 
 
 std::istream& operator >> (std::istream &stream, Time &time) {
-    int hours, min;
     char separator;
+    int hours, min;
 
     stream >> hours;
     stream >> separator;
     stream >> min;
 
     time = Time(hours, min);
-    return stream;
-}
-
-
-std::ostream &operator << (std::ostream &stream, Time &time) {
-    const char separator = ':';
-
-    stream << time.hours;
-    stream << separator;
-    stream << time.min;
-
     return stream;
 }
