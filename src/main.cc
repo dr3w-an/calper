@@ -36,24 +36,27 @@ int show_tasks(int argc, char *argv[]) {
     while (arg < argc) {
         std::string argument = argv[arg];
 
-        if (argument[0] != '-') {
-            arg++;
+        if (argument[0] == '-' && argument.size() == 2) {
+            switch (argument[1]) {
+                case 'y':
+                    year = atoi(argv[arg + 1]);
+                    year_specified = true;
+                    arg += 2;
+                    break;
+                case 'm':
+                    month = atoi(argv[arg + 1]);
+                    month_specified = true;
+                    arg += 2;
+                    break;
+                case 'd':
+                    day = atoi(argv[arg + 1]);
+                    day_specified = true;
+                    arg += 2;
+                    break;
+            }
             continue;
         }
-
-        if (argument == "-y") {
-            year = atoi(argv[arg + 1]);
-            year_specified = true;
-            arg += 2;
-        } else if (argument == "-m") {
-            month = atoi(argv[arg + 1]);
-            month_specified = true;
-            arg += 2;
-        } else if (argument == "-d") {
-            day = atoi(argv[arg + 1]);
-            day_specified = true;
-            arg += 2;
-        }
+        arg++;
     }
 
     Date date;
@@ -135,39 +138,48 @@ int add_task(int argc, char *argv[]) {
     while (arg < argc) {
         std::string argument = argv[arg];
 
-        if (argument[0] == '-') {
-            if (argument == "-y") {
-                task.set_year(atoi(argv[arg + 1]));
-                arg += 2;
-            } else if (argument == "-m") {
-                task.set_month(atoi(argv[arg + 1]));
-                arg += 2;
-            } else if (argument == "-d") {
-                task.set_day(atoi(argv[arg + 1]));
-                arg += 2;
-            } else if (argument == "-s") {
-                Time start;
-                std::istringstream stream(argv[arg + 1]);
-                stream >> start;
-                task.set_start(start);
-                arg += 2;
-            } else if (argument == "-e") {
-                Time end;
-                std::istringstream stream(argv[arg + 1]);
-                stream >> end;
-                task.set_end(end);
-                arg += 2;
-            } else if (argument == "-x") {
-                task.done = true;
-                arg += 1;
+        if (argument[0] == '-' && argument.size() == 2) {
+            switch (argument[1]) {
+                case 'y':
+                    task.set_year(atoi(argv[arg + 1]));
+                    arg += 2;
+                    break;
+                case 'm':
+                    task.set_month(atoi(argv[arg + 1]));
+                    arg += 2;
+                    break;
+                case 'd':
+                    task.set_day(atoi(argv[arg + 1]));
+                    arg += 2;
+                    break;
+                case 's': {
+                    Time start;
+                    std::istringstream stream(argv[arg + 1]);
+                    stream >> start;
+                    task.set_start(start);
+                    arg += 2;
+                    break;
+                }
+                case 'e': {
+                    Time end;
+                    std::istringstream stream(argv[arg + 1]);
+                    stream >> end;
+                    task.set_end(end);
+                    arg += 2;
+                    break;
+                }
+                case 'x':
+                    task.done = true;
+                    arg += 1;
+                    break;
             }
             continue;
         }
         if (stream_is_empty) {
-            title << argv[arg];
+            title << argument;
             stream_is_empty = false;
         } else {
-            title << ' ' << argv[arg];
+            title << ' ' << argument;
         }
         arg++;
     }
@@ -244,39 +256,48 @@ int edit_task(int argc, char *argv[]) {
                 while (arg < argc) {
                     std::string argument = argv[arg];
 
-                    if (argument[0] == '-') {
-                        if (argument == "-y") {
-                            task.set_year(atoi(argv[arg + 1]));
-                            arg += 2;
-                        } else if (argument == "-m") {
-                            task.set_month(atoi(argv[arg + 1]));
-                            arg += 2;
-                        } else if (argument == "-d") {
-                            task.set_day(atoi(argv[arg + 1]));
-                            arg += 2;
-                        } else if (argument == "-s") {
-                            Time start;
-                            std::istringstream stream(argv[arg + 1]);
-                            stream >> start;
-                            task.set_start(start);
-                            arg += 2;
-                        } else if (argument == "-e") {
-                            Time end;
-                            std::istringstream stream(argv[arg + 1]);
-                            stream >> end;
-                            task.set_end(end);
-                            arg += 2;
-                        } else if (argument == "-x") {
-                            task.done = not task.done;
-                            arg += 1;
+                    if (argument[0] == '-' && argument.size() == 2) {
+                        switch (argument[2]) {
+                            case 'y':
+                                task.set_year(atoi(argv[arg + 1]));
+                                arg += 2;
+                                break;
+                            case 'm':
+                                task.set_month(atoi(argv[arg + 1]));
+                                arg += 2;
+                                break;
+                            case 'd':
+                                task.set_day(atoi(argv[arg + 1]));
+                                arg += 2;
+                                break;
+                            case 's': {
+                                Time start;
+                                std::istringstream stream(argv[arg + 1]);
+                                stream >> start;
+                                task.set_start(start);
+                                arg += 2;
+                                break;
+                            }
+                            case 'e': {
+                                Time end;
+                                std::istringstream stream(argv[arg + 1]);
+                                stream >> end;
+                                task.set_end(end);
+                                arg += 2;
+                                break;
+                            }
+                            case 'x':
+                                task.done = not task.done;
+                                arg += 1;
+                                break;
                         }
                         continue;
                     }
                     if (stream_is_empty) {
-                        title << argv[arg];
+                        title << argument;
                         stream_is_empty = false;
                     } else {
-                        title << ' ' << argv[arg];
+                        title << ' ' << argument;
                     }
                     arg++;
                 }
