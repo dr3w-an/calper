@@ -35,7 +35,6 @@ int show_tasks(int argc, char *argv[]) {
     int arg = 2;
     while (arg < argc) {
         std::string argument = argv[arg];
-
         if (argument[0] == '-' && argument.size() == 2) {
             switch (argument[1]) {
                 case 'y':
@@ -137,7 +136,6 @@ int add_task(int argc, char *argv[]) {
     bool stream_is_empty = true;
     while (arg < argc) {
         std::string argument = argv[arg];
-
         if (argument[0] == '-' && argument.size() == 2) {
             switch (argument[1]) {
                 case 'y':
@@ -170,7 +168,7 @@ int add_task(int argc, char *argv[]) {
                 }
                 case 'x':
                     task.done = true;
-                    arg += 1;
+                    arg++;
                     break;
             }
             continue;
@@ -248,63 +246,60 @@ int edit_task(int argc, char *argv[]) {
     while (task_read) {
         Task task;
         task_read = static_cast<bool>(database >> task);
-        if (task_read) {
-            if (task.id == task_id) {
-                task_exists = true;
-
-                int arg = 3;
-                while (arg < argc) {
-                    std::string argument = argv[arg];
-
-                    if (argument[0] == '-' && argument.size() == 2) {
-                        switch (argument[2]) {
-                            case 'y':
-                                task.set_year(atoi(argv[arg + 1]));
-                                arg += 2;
-                                break;
-                            case 'm':
-                                task.set_month(atoi(argv[arg + 1]));
-                                arg += 2;
-                                break;
-                            case 'd':
-                                task.set_day(atoi(argv[arg + 1]));
-                                arg += 2;
-                                break;
-                            case 's': {
-                                Time start;
-                                std::istringstream stream(argv[arg + 1]);
-                                stream >> start;
-                                task.set_start(start);
-                                arg += 2;
-                                break;
-                            }
-                            case 'e': {
-                                Time end;
-                                std::istringstream stream(argv[arg + 1]);
-                                stream >> end;
-                                task.set_end(end);
-                                arg += 2;
-                                break;
-                            }
-                            case 'x':
-                                task.done = not task.done;
-                                arg += 1;
-                                break;
+        if (!task_read) break;
+        if (task.id == task_id) {
+            task_exists = true;
+            int arg = 3;
+            while (arg < argc) {
+                std::string argument = argv[arg];
+                if (argument[0] == '-' && argument.size() == 2) {
+                    switch (argument[1]) {
+                        case 'y':
+                            task.set_year(atoi(argv[arg + 1]));
+                            arg += 2;
+                            break;
+                        case 'm':
+                            task.set_month(atoi(argv[arg + 1]));
+                            arg += 2;
+                            break;
+                        case 'd':
+                            task.set_day(atoi(argv[arg + 1]));
+                            arg += 2;
+                            break;
+                        case 's': {
+                            Time start;
+                            std::istringstream stream(argv[arg + 1]);
+                            stream >> start;
+                            task.set_start(start);
+                            arg += 2;
+                            break;
                         }
-                        continue;
+                        case 'e': {
+                            Time end;
+                            std::istringstream stream(argv[arg + 1]);
+                            stream >> end;
+                            task.set_end(end);
+                            arg += 2;
+                            break;
+                        }
+                        case 'x':
+                            task.done = not task.done;
+                            arg++;
+                            break;
                     }
-                    if (stream_is_empty) {
-                        title << argument;
-                        stream_is_empty = false;
-                    } else {
-                        title << ' ' << argument;
-                    }
-                    arg++;
+                    continue;
                 }
-                if (!stream_is_empty) task.title = title.str();
+                if (stream_is_empty) {
+                    title << argument;
+                    stream_is_empty = false;
+                } else {
+                    title << ' ' << argument;
+                }
+                arg++;
             }
-            temp_database << task;
+            if (!stream_is_empty) task.title = title.str();
         }
+        temp_database << task;
     }
 
     if (task_exists) {
@@ -370,15 +365,11 @@ int main(int argc, char *argv[]) {
     if (argc < 2)
         return show_usage(argv[0]);
 
-    std::string command = argv[1];
-    if (command == "show")
-        return show_tasks(argc, argv);
-    else if (command == "add")
-        return add_task(argc, argv);
-    else if (command == "edit")
-        return edit_task(argc, argv);
-    else if (command == "remove")
-        return remove_task(argc, argv);
-    else
-        return show_usage(argv[0]);
+    switch (argv[1][0]) {
+        case 's': return show_tasks(argc, argv);
+        case 'a': return add_task(argc, argv);
+        case 'e': return edit_task(argc, argv);
+        case 'r': return remove_task(argc, argv);
+        default:  return show_usage(argv[0]);
+    }
 }
