@@ -95,7 +95,7 @@ std::ostream &operator << (std::ostream &stream, const Task &task) {
 
     stream << task.id;
     stream << separator;
-    stream << (int)task.done;
+    stream << task.done;
     stream << separator;
     stream << task.date_format();
     stream << separator;

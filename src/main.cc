@@ -1,4 +1,6 @@
-#include "main.h"
+#define DATABASE_NAME "calper.dat"
+
+#include "Task.h"
 #include <algorithm>
 #include <ctime>
 #include <fstream>
