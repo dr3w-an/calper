@@ -5,6 +5,7 @@
 #include <ctime>
 #include <fstream>
 #include <iomanip>
+#include <unordered_set>
 #include <vector>
 
 
@@ -24,7 +25,18 @@ int show_usage(char *program_name) {
               << "\t-e HH:MM               End time of task (default is 23:59)\n"
               << "\t-x                     Task is done (default is false)"
               << std::endl;
-    return 1;
+    return EXIT_FAILURE;
+}
+
+
+bool stoi(const std::string &str, int &value) {
+    try {
+        value = std::stoi(str);
+        return true;
+    } catch (std::invalid_argument &error) {
+        std::cerr << "Invalid argument: '" << str << "' cannot be converted to a number" << std::endl;
+        return false;
+    }
 }
 
 
@@ -40,19 +52,26 @@ int show_tasks(int argc, char *argv[]) {
         if (argument[0] == '-' && argument.size() == 2) {
             switch (argument[1]) {
                 case 'y':
-                    year = atoi(argv[arg + 1]);
+                    if (!stoi(argv[arg + 1], year))
+                        return EXIT_FAILURE;
                     year_specified = true;
                     arg += 2;
                     break;
                 case 'm':
-                    month = atoi(argv[arg + 1]);
+                    if (!stoi(argv[arg + 1], month))
+                        return EXIT_FAILURE;
                     month_specified = true;
                     arg += 2;
                     break;
                 case 'd':
-                    day = atoi(argv[arg + 1]);
+                    if (!stoi(argv[arg + 1], day))
+                        return EXIT_FAILURE;
                     day_specified = true;
                     arg += 2;
+                    break;
+                default:
+                    std::cerr << "Unknown option: " << argument << std::endl;
+                    arg++;
                     break;
             }
             continue;
@@ -81,11 +100,11 @@ int show_tasks(int argc, char *argv[]) {
     database.open(DATABASE_NAME, std::ios::ate);
     if (!database) {
         std::cerr << "Database can't be accessed." << std::endl;
-        return 1;
+        return EXIT_FAILURE;
     }
     if ((int)database.tellg() == 0) {
         std::cerr << "Database is empty." << std::endl;
-        return 1;
+        return EXIT_FAILURE;
     }
 
     std::vector<Task> task_vector = {};
@@ -115,15 +134,59 @@ int show_tasks(int argc, char *argv[]) {
         std::cout << "Tasks on " << date.date_format() << '\n';
         for (Task task: task_vector) {
             char mark = task.done ? 'x' : ' ';
-            std::cout << '[' << mark << "] " << std::setw(id_space) << task.id << ' '
+            std::cout << std::setw(id_space) << task.id << " [" << mark << "] "
                       << task.format() << ' ' << task.title << '\n';
         }
-        return 0;
+        return EXIT_SUCCESS;
     } else {
         std::cerr << "Can't get tasks on " << date.date_format() << '.' << std::endl;
-        return 1;
+        return EXIT_FAILURE;
     }
 };
+
+
+int parse_task_argument(char *argv[], int arg, Task &task) {
+    switch (argv[arg][1]) {
+        case 'y': {
+            int year;
+            if (!stoi(argv[arg + 1], year)) return 1;
+            task.set_year(year);
+            return arg + 2;
+        }
+        case 'm': {
+            int month;
+            if (!stoi(argv[arg + 1], month)) return 1;
+            task.set_month(month);
+            return arg + 2;
+        }
+        case 'd': {
+            int day;
+            if (!stoi(argv[arg + 1], day)) return 1;
+            task.set_day(day);
+            return arg + 2;
+        }
+        case 's': {
+            Time start;
+            std::istringstream stream(argv[arg + 1]);
+            stream >> start;
+            task.set_start(start);
+            return arg + 2;
+        }
+        case 'e': {
+            Time end;
+            std::istringstream stream(argv[arg + 1]);
+            stream >> end;
+            task.set_end(end);
+            return arg + 2;
+        }
+        case 'x': {
+            task.done = not task.done;
+            return arg + 1;
+        }
+    }
+    std::cerr << "Unknown option: " << argv[arg] << std::endl;
+    return arg + 1;
+}
 
 
 int add_task(int argc, char *argv[]) {
@@ -139,40 +202,7 @@ int add_task(int argc, char *argv[]) {
     while (arg < argc) {
         std::string argument = argv[arg];
         if (argument[0] == '-' && argument.size() == 2) {
-            switch (argument[1]) {
-                case 'y':
-                    task.set_year(atoi(argv[arg + 1]));
-                    arg += 2;
-                    break;
-                case 'm':
-                    task.set_month(atoi(argv[arg + 1]));
-                    arg += 2;
-                    break;
-                case 'd':
-                    task.set_day(atoi(argv[arg + 1]));
-                    arg += 2;
-                    break;
-                case 's': {
-                    Time start;
-                    std::istringstream stream(argv[arg + 1]);
-                    stream >> start;
-                    task.set_start(start);
-                    arg += 2;
-                    break;
-                }
-                case 'e': {
-                    Time end;
-                    std::istringstream stream(argv[arg + 1]);
-                    stream >> end;
-                    task.set_end(end);
-                    arg += 2;
-                    break;
-                }
-                case 'x':
-                    task.done = true;
-                    arg++;
-                    break;
-            }
+            arg = parse_task_argument(argv, arg, task);
             continue;
         }
         if (stream_is_empty) {
@@ -218,7 +248,7 @@ int add_task(int argc, char *argv[]) {
     }
 
     database.close();
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 
@@ -226,15 +256,24 @@ int edit_task(int argc, char *argv[]) {
     if (argc <= 2)
         return show_usage(argv[0]);
 
+    std::unordered_set<int> task_ids;
+    int options_start = 2;
     int task_id;
-    task_id = atoi(argv[2]);
+    while (argv[options_start][0] != '-') {
+        if (!stoi(argv[options_start], task_id))
+            return EXIT_FAILURE;
+        task_ids.insert(task_id);
+        options_start++;
+        if (options_start >= argc)
+            return show_usage(argv[0]);
+    }
 
     std::ifstream database;
     database.open(DATABASE_NAME);
 
     if (!database) {
         std::cerr << "Database can't be accessed." << std::endl;
-        return 1;
+        return EXIT_FAILURE;
     }
 
     const char temp_database_name[] = ".~" DATABASE_NAME;
@@ -243,78 +282,50 @@ int edit_task(int argc, char *argv[]) {
     std::ostringstream title;
 
     bool task_read = true;
-    bool task_exists = false;
+    int task_count = 0;
     bool stream_is_empty = true;
     while (task_read) {
         Task task;
         task_read = static_cast<bool>(database >> task);
-        if (!task_read) break;
-        if (task.id == task_id) {
-            task_exists = true;
-            int arg = 3;
-            while (arg < argc) {
-                std::string argument = argv[arg];
-                if (argument[0] == '-' && argument.size() == 2) {
-                    switch (argument[1]) {
-                        case 'y':
-                            task.set_year(atoi(argv[arg + 1]));
-                            arg += 2;
-                            break;
-                        case 'm':
-                            task.set_month(atoi(argv[arg + 1]));
-                            arg += 2;
-                            break;
-                        case 'd':
-                            task.set_day(atoi(argv[arg + 1]));
-                            arg += 2;
-                            break;
-                        case 's': {
-                            Time start;
-                            std::istringstream stream(argv[arg + 1]);
-                            stream >> start;
-                            task.set_start(start);
-                            arg += 2;
-                            break;
-                        }
-                        case 'e': {
-                            Time end;
-                            std::istringstream stream(argv[arg + 1]);
-                            stream >> end;
-                            task.set_end(end);
-                            arg += 2;
-                            break;
-                        }
-                        case 'x':
-                            task.done = not task.done;
-                            arg++;
-                            break;
+        if (task_read) {
+            int arg = options_start;
+            if (task_ids.find(task.id) != task_ids.end()) {
+                task_count++;
+                while (arg < argc) {
+                    std::string argument = argv[arg];
+                    if (argument[0] == '-' && argument.size() == 2) {
+                        arg = parse_task_argument(argv, arg, task);
+                        continue;
                     }
-                    continue;
+                    if (task_ids.size() == 1 && stream_is_empty) {
+                        title << argument;
+                        stream_is_empty = false;
+                    } else {
+                        title << ' ' << argument;
+                    }
+                    arg++;
                 }
-                if (stream_is_empty) {
-                    title << argument;
-                    stream_is_empty = false;
-                } else {
-                    title << ' ' << argument;
-                }
-                arg++;
+                if (!stream_is_empty) task.title = title.str();
             }
-            if (!stream_is_empty) task.title = title.str();
+            temp_database << task;
         }
-        temp_database << task;
     }
 
-    if (task_exists) {
+    if (task_count > 0) {
         remove(DATABASE_NAME);
         rename(temp_database_name, DATABASE_NAME);
-        std::cout << "Task successfully edited." << std::endl;
+        if (task_count == 1)
+            std::cout << "1 task";
+        else
+            std::cout << task_count << " tasks";
+        std::cout << " successfully edited." << std::endl;
     } else {
-        std::cerr << "Can't edit task." << std::endl;
+        std::cerr << "No tasks edited." << std::endl;
     }
 
     database.close();
     temp_database.close();
-    return 0;
+    return EXIT_SUCCESS;
 };
 
 
@@ -322,15 +333,20 @@ int remove_task(int argc, char *argv[]) {
     if (argc <= 2)
         return show_usage(argv[0]);
 
+    std::unordered_set<int> task_ids;
     int task_id;
-    task_id = atoi(argv[2]);
+    for (int i = 2; i < argc; i++) {
+        if (!stoi(argv[i], task_id))
+            return EXIT_FAILURE;
+        task_ids.insert(task_id);
+    }
 
     std::ifstream database;
     database.open(DATABASE_NAME);
 
     if (!database) {
         std::cerr << "Database can't be accessed." << std::endl;
-        return 1;
+        return EXIT_FAILURE;
     }
 
     const char temp_database_name[] = ".~" DATABASE_NAME;
@@ -338,28 +354,34 @@ int remove_task(int argc, char *argv[]) {
     temp_database.open(temp_database_name);
 
     bool task_read = true;
-    bool task_exists = false;
+    int task_count = 0;
     while (task_read) {
         Task task;
         task_read = static_cast<bool>(database >> task);
-        if (task_read && task.id != task_id) {
-            temp_database << task;
-	} else {
-            task_exists = true;
+        if (task_read) {
+            if (task_ids.find(task.id) == task_ids.end()) {
+                temp_database << task;
+            } else {
+                task_count++;
+            }
         }
     }
 
-    if (task_exists) {
+    if (task_count > 0) {
         remove(DATABASE_NAME);
         rename(temp_database_name, DATABASE_NAME);
-        std::cout << "Task successfully removed." << std::endl;
+        if (task_count == 1)
+            std::cout << "1 task";
+        else
+            std::cout << task_count << " tasks";
+        std::cout << " successfully removed." << std::endl;
     } else {
-        std::cerr << "Can't remove task." << std::endl;
+        std::cerr << "No tasks removed." << std::endl;
     }
 
     database.close();
     temp_database.close();
-    return 0;
+    return EXIT_SUCCESS;
 };
 
 
@@ -367,11 +389,16 @@ int main(int argc, char *argv[]) {
     if (argc < 2)
         return show_usage(argv[0]);
 
-    switch (argv[1][0]) {
-        case 's': return show_tasks(argc, argv);
-        case 'a': return add_task(argc, argv);
-        case 'e': return edit_task(argc, argv);
-        case 'r': return remove_task(argc, argv);
-        default:  return show_usage(argv[0]);
+    try {
+        switch (argv[1][0]) {
+            case 's': return show_tasks(argc, argv);
+            case 'a': return add_task(argc, argv);
+            case 'e': return edit_task(argc, argv);
+            case 'r': return remove_task(argc, argv);
+            default:  return show_usage(argv[0]);
+        }
+    } catch (std::invalid_argument &error) {
+        std::cerr << "Invalid argument: " << error.what() << std::endl;
+        return EXIT_FAILURE;
     }
 }
