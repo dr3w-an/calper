@@ -113,10 +113,13 @@ int show_tasks(int argc, char *argv[]) {
     else if (!year_specified || day_specified)
         date.set_month();
 
+    bool day_is_set = true;
     if (day_specified)
         date.set_day(day);
     else if (!(year_specified || month_specified))
         date.set_day();
+    else
+        day_is_set = false;
 
     std::ifstream database;
     database.open(DATABASE_NAME, std::ios::ate);
@@ -130,6 +133,7 @@ int show_tasks(int argc, char *argv[]) {
     }
 
     std::vector<Task> task_vector;
+    int tasks_done = 0;
     int max_task_id = 0;
     int max_priority = 0;
 
@@ -140,6 +144,7 @@ int show_tasks(int argc, char *argv[]) {
         task_read = static_cast<bool>(database >> task);
         if (task_read && task.is_date_equal(date) && (not undone_only || !task.done)) {
             task_vector.push_back(task);
+            if (task.done) tasks_done++;
             if (task.id > max_task_id) max_task_id = task.id;
             if (task.priority > max_priority) max_priority = task.priority;
 	}
@@ -150,8 +155,12 @@ int show_tasks(int argc, char *argv[]) {
     int id_width = int_width(max_task_id);
     int priority_width = int_width(max_priority);
 
+    char prep[] = {day_is_set ? 'o' : 'i', 'n'};  // "on" day, but "in" month or year
     if (!task_vector.empty()) {
-        std::cout << "Tasks on " << date.date_format() << '\n';
+        std::cout << tasks_done << '/' << task_vector.size() << " task";
+        if (tasks_done > 1) std::cout << 's';
+        std::cout << " done " << prep << ' ' << date.date_format() << '\n';
+
         if (colorize) {
             Task dummy;
             dummy.today();
@@ -176,7 +185,7 @@ int show_tasks(int argc, char *argv[]) {
         }
         return EXIT_SUCCESS;
     } else {
-        std::cerr << "Can't get tasks on " << date.date_format() << '.' << std::endl;
+        std::cerr << "Can't get tasks " << prep << ' ' << date.date_format() << '.' << std::endl;
         return EXIT_FAILURE;
     }
 };
@@ -366,10 +375,8 @@ int edit_task(int argc, char *argv[]) {
     if (task_count > 0) {
         remove(DATABASE_NAME);
         rename(temp_database_name, DATABASE_NAME);
-        if (task_count == 1)
-            std::cout << "1 task";
-        else
-            std::cout << task_count << " tasks";
+        std::cout << task_count << " task";
+        if (task_count > 1) std::cout << 's';
         std::cout << " successfully edited." << std::endl;
     } else {
         std::cerr << "No tasks edited." << std::endl;
@@ -422,10 +429,8 @@ int remove_task(int argc, char *argv[]) {
     if (task_count > 0) {
         remove(DATABASE_NAME);
         rename(temp_database_name, DATABASE_NAME);
-        if (task_count == 1)
-            std::cout << "1 task";
-        else
-            std::cout << task_count << " tasks";
+        std::cout << task_count << " task";
+        if (task_count > 1) std::cout << 's';
         std::cout << " successfully removed." << std::endl;
     } else {
         std::cerr << "No tasks removed." << std::endl;
