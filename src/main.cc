@@ -9,24 +9,32 @@
 #include <vector>
 
 
-int show_usage(char *program_name) {
-    std::cerr << "Usage: " << program_name << " <command> [options]\n\n"
+int usage(char *program_name) {
+    std::cerr << "Usage: " << program_name << " <command>\n\n"
               << "Commands:\n"
               << "\tshow [options]         Show tasks\n"
+              << "\tedit <ID> [options]    Edit task\n"
+              << "\t  Options:\n"
+              << "\t    -y YEAR            Year of task (default is system time)\n"
+              << "\t    -m MONTH           Month of task (default is unset or system time)\n"
+              << "\t    -d DAY             Day of task (default is unset or system time)\n"
+              << "\t    -x                 Exclude done tasks (default is false)\n"
+              << "\t    -c                 Colorize the output (default is false)\n"
+              << '\n'
               << "\tadd <TITLE> [options]  Add task\n"
               << "\tedit <ID> [options]    Edit task\n"
+              << "\t  Options:\n"
+              << "\t    -p PRIORITY        Priority of task (default is 1)\n"
+              << "\t    -y YEAR            Year of task (default is system time)\n"
+              << "\t    -m MONTH           Month of task (default is system time)\n"
+              << "\t    -d DAY             Day of task (default is system time)\n"
+              << "\t    -s HH:MM           Start time of task (default is 00:00)\n"
+              << "\t    -e HH:MM           End time of task (default is 23:59)\n"
+              << "\t    -x                 Task is done (default is false)\n"
+              << '\n'
               << "\tremove <ID>            Remove task\n"
-              << "\n"
-              << "Options:\n"
-              << "\t-p PRIORITY            Priority of task (default is 1)\n"
-              << "\t-d DAY                 Day of task (default is system time)\n"
-              << "\t-m MONTH               Month of task (default is system time)\n"
-              << "\t-y YEAR                Year of task (default is system time)\n"
-              << "\t-s HH:MM               Start time of task (default is 00:00)\n"
-              << "\t-e HH:MM               End time of task (default is 23:59)\n"
-              << "\t-x                     Task is done (default is false)\n"
-              << "\t-c                     Colorize the output (default is false)"
-              << std::endl;
+              << '\n'
+              << "Only the first character of these commands is counted.\n";
     return EXIT_FAILURE;
 }
 
@@ -142,7 +150,7 @@ int show_tasks(int argc, char *argv[]) {
     while (task_read) {
         Task task;
         task_read = static_cast<bool>(database >> task);
-        if (task_read && task.is_date_equal(date) && (not undone_only || !task.done)) {
+        if (task_read && task.is_date_equal(date) && !(undone_only && task.done)) {
             task_vector.push_back(task);
             if (task.done) tasks_done++;
             if (task.id > max_task_id) max_task_id = task.id;
@@ -157,9 +165,15 @@ int show_tasks(int argc, char *argv[]) {
 
     char prep[] = {day_is_set ? 'o' : 'i', 'n'};  // "on" day, but "in" month or year
     if (!task_vector.empty()) {
-        std::cout << tasks_done << '/' << task_vector.size() << " task";
-        if (tasks_done > 1) std::cout << 's';
-        std::cout << " done " << prep << ' ' << date.date_format() << '\n';
+        if (undone_only) {
+            std::cout << task_vector.size() << " task";
+            if (task_vector.size() != 1) std::cout << 's';
+            std::cout << " undone " << prep << ' ' << date.date_format() << '\n';
+        } else {
+            std::cout << tasks_done << '/' << task_vector.size() << " task";
+            if (tasks_done != 1) std::cout << 's';
+            std::cout << " done " << prep << ' ' << date.date_format() << '\n';
+        }
 
         if (colorize) {
             Task dummy;
@@ -172,9 +186,9 @@ int show_tasks(int argc, char *argv[]) {
             for (Task task: task_vector) {
                 dummy.priority = task.priority;
                 if (task.done)
-                    std::cout << "\033[32m" << task.format(id_width, priority_width) << "\033[0m\n";
+                    std::cout << "\033[32m" << task.format(id_width, priority_width) << "\033[0m\n";  // Green
                 else if (task < dummy)
-                    std::cout << "\033[31m" << task.format(id_width, priority_width) << "\033[0m\n";
+                    std::cout << "\033[31m" << task.format(id_width, priority_width) << "\033[0m\n";  // Red
                 else
                     std::cout << task.format(id_width, priority_width) << '\n';
             }
@@ -185,7 +199,7 @@ int show_tasks(int argc, char *argv[]) {
         }
         return EXIT_SUCCESS;
     } else {
-        std::cerr << "Can't get tasks " << prep << ' ' << date.date_format() << '.' << std::endl;
+        std::cerr << "No tasks " << prep << ' ' << date.date_format() << std::endl;
         return EXIT_FAILURE;
     }
 };
@@ -247,7 +261,7 @@ int parse_task_argument(char *argv[], int arg, Task &task) {
 
 int add_task(int argc, char *argv[]) {
     if (argc <= 2)
-        return show_usage(argv[0]);
+        return usage(argv[0]);
 
     Task task;
     task.today();
@@ -274,7 +288,7 @@ int add_task(int argc, char *argv[]) {
     }
 
     if (stream_is_empty)
-        return show_usage(argv[0]);
+        return usage(argv[0]);
 
     task.title = title.str();
 
@@ -312,7 +326,7 @@ int add_task(int argc, char *argv[]) {
 
 int edit_task(int argc, char *argv[]) {
     if (argc <= 2)
-        return show_usage(argv[0]);
+        return usage(argv[0]);
 
     std::unordered_set<int> task_ids;
     int options_start = 2;
@@ -323,7 +337,7 @@ int edit_task(int argc, char *argv[]) {
         task_ids.insert(task_id);
         options_start++;
         if (options_start >= argc)
-            return show_usage(argv[0]);
+            return usage(argv[0]);
     }
 
     std::ifstream database;
@@ -371,26 +385,26 @@ int edit_task(int argc, char *argv[]) {
             temp_database << task;
         }
     }
+    database.close();
+    temp_database.close();
 
     if (task_count > 0) {
         remove(DATABASE_NAME);
         rename(temp_database_name, DATABASE_NAME);
         std::cout << task_count << " task";
-        if (task_count > 1) std::cout << 's';
+        if (task_count != 1) std::cout << 's';
         std::cout << " successfully edited." << std::endl;
+        return EXIT_SUCCESS;
     } else {
         std::cerr << "No tasks edited." << std::endl;
+        return EXIT_FAILURE;
     }
-
-    database.close();
-    temp_database.close();
-    return EXIT_SUCCESS;
 };
 
 
 int remove_task(int argc, char *argv[]) {
     if (argc <= 2)
-        return show_usage(argv[0]);
+        return usage(argv[0]);
 
     std::unordered_set<int> task_ids;
     int task_id;
@@ -425,26 +439,26 @@ int remove_task(int argc, char *argv[]) {
             }
         }
     }
+    database.close();
+    temp_database.close();
 
     if (task_count > 0) {
         remove(DATABASE_NAME);
         rename(temp_database_name, DATABASE_NAME);
         std::cout << task_count << " task";
-        if (task_count > 1) std::cout << 's';
+        if (task_count != 1) std::cout << 's';
         std::cout << " successfully removed." << std::endl;
+        return EXIT_SUCCESS;
     } else {
         std::cerr << "No tasks removed." << std::endl;
+        return EXIT_FAILURE;
     }
-
-    database.close();
-    temp_database.close();
-    return EXIT_SUCCESS;
 };
 
 
 int main(int argc, char *argv[]) {
     if (argc < 2)
-        return show_usage(argv[0]);
+        return usage(argv[0]);
 
     try {
         switch (argv[1][0]) {
@@ -452,7 +466,7 @@ int main(int argc, char *argv[]) {
             case 'a': return add_task(argc, argv);
             case 'e': return edit_task(argc, argv);
             case 'r': return remove_task(argc, argv);
-            default:  return show_usage(argv[0]);
+            default:  return usage(argv[0]);
         }
     } catch (std::invalid_argument &error) {
         std::cerr << "Invalid argument: " << error.what() << std::endl;
