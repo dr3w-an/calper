@@ -23,18 +23,20 @@ std::string Time::format() const {
 }
 
 
+bool Time::operator < (const Time &time) const {
+    // Used in Task::operator <
+    return (hours < time.hours || (hours == time.hours && min < time.min));
+}
+
+
 bool Time::operator == (const Time &time) const {
+    // Used in Task::operator <
     return (hours == time.hours && min == time.min);
 }
 
 
 bool Time::operator >= (const Time &time) const {
     return (hours > time.hours || (hours == time.hours && min >= time.min));
-}
-
-
-bool Time::operator < (const Time &time) const {
-    return (hours < time.hours || (hours == time.hours && min < time.min));
 }
 
 

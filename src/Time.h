@@ -11,9 +11,9 @@ class Time {
 
         std::string format() const;
 
+        bool operator <  (const Time &) const;
         bool operator == (const Time &) const;
         bool operator >= (const Time &) const;
-        bool operator <  (const Time &) const;
         bool operator <= (const Time &) const;
         friend std::istream &operator >> (std::istream &, Time &);
         friend std::ostream &operator << (std::ostream &, const Time &);

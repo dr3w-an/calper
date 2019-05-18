@@ -1,4 +1,4 @@
-#define DATABASE_NAME "calper.dat"
+#define DATABASE_NAME "calper.csv"
 
 #include "Task.h"
 #include <algorithm>
@@ -51,6 +51,7 @@ bool stoi(const std::string &str, int &value) {
 
 
 int int_width(int n) {
+    // Calculate the number of digits in number n
     int width = 0;
     while (n) {
         n /= 10;
@@ -206,6 +207,7 @@ int show_tasks(int argc, char *argv[]) {
 
 
 int parse_task_argument(char *argv[], int arg, Task &task) {
+    // Same arguments in add and edit
     switch (argv[arg][1]) {
         case 'p': {
             int priority;

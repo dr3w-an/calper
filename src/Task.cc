@@ -37,6 +37,8 @@ std::string Task::format(int id_width, int priority_width) const {
 
 
 bool Task::operator < (const Task &task) const {
+    /* Used in std::sort in show command: the lesser tasks, which are defined
+     * by returning true in this operator, appear on top of the list. */
     return (priority > task.priority ||
         (priority == task.priority && (year < task.year ||
             (year == task.year && (month < task.month ||
