@@ -27,7 +27,7 @@ void Task::set_end(const Time &time) {
 std::string Task::format(int id_width, int priority_width) const {
     std::ostringstream stream;
     stream << std::setw(id_width) << id
-           << " [" << (done ? 'X' : ' ') << "] "
+           << " [" << (done ? 'x' : ' ') << "] "
            << std::setw(priority_width) << priority
            << ' ' << date_format()
            << " (" << start.format() << '-' << end.format() << ") "

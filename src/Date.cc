@@ -15,7 +15,7 @@ void Date::today() {
 
 
 tm *current_tm() {
-    time_t now = time(0);
+    time_t now = time(NULL);
     return localtime(&now);
 }
 

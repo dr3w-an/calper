@@ -24,7 +24,8 @@ int show_usage(char *program_name) {
               << "\t-y YEAR                Year of task (default is system time)\n"
               << "\t-s HH:MM               Start time of task (default is 00:00)\n"
               << "\t-e HH:MM               End time of task (default is 23:59)\n"
-              << "\t-x                     Task is done (default is false)"
+              << "\t-x                     Task is done (default is false)\n"
+              << "\t-c                     Colorize the output (default is false)"
               << std::endl;
     return EXIT_FAILURE;
 }
@@ -56,6 +57,7 @@ int show_tasks(int argc, char *argv[]) {
     bool year_specified = false;
     bool month_specified = false;
     bool day_specified = false;
+    bool colorize = false;
 
     int arg = 2;
     while (arg < argc) {
@@ -79,6 +81,10 @@ int show_tasks(int argc, char *argv[]) {
                         return EXIT_FAILURE;
                     day_specified = true;
                     arg += 2;
+                    break;
+                case 'c':
+                    colorize = true;
+                    arg++;
                     break;
                 default:
                     std::cerr << "Unknown option: " << argument << std::endl;
@@ -141,8 +147,27 @@ int show_tasks(int argc, char *argv[]) {
 
     if (!task_vector.empty()) {
         std::cout << "Tasks on " << date.date_format() << '\n';
-        for (Task task: task_vector) {
-            std::cout << task.format(id_width, priority_width) << '\n';
+        if (colorize) {
+            Task dummy;
+            dummy.today();
+            time_t now = time(NULL);
+            tm *time_info = localtime(&now);
+            Time start(time_info->tm_hour, time_info->tm_min);
+            dummy.set_start(start);
+
+            for (Task task: task_vector) {
+                dummy.priority = task.priority;
+                if (task.done)
+                    std::cout << "\033[32m" << task.format(id_width, priority_width) << "\033[0m\n";
+                else if (task < dummy)
+                    std::cout << "\033[31m" << task.format(id_width, priority_width) << "\033[0m\n";
+                else
+                    std::cout << task.format(id_width, priority_width) << '\n';
+            }
+        } else {
+            for (Task task: task_vector) {
+                std::cout << task.format(id_width, priority_width) << '\n';
+            }
         }
         return EXIT_SUCCESS;
     } else {
