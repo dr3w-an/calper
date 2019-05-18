@@ -57,6 +57,7 @@ int show_tasks(int argc, char *argv[]) {
     bool year_specified = false;
     bool month_specified = false;
     bool day_specified = false;
+    bool undone_only = false;
     bool colorize = false;
 
     int arg = 2;
@@ -81,6 +82,10 @@ int show_tasks(int argc, char *argv[]) {
                         return EXIT_FAILURE;
                     day_specified = true;
                     arg += 2;
+                    break;
+                case 'x':
+                    undone_only = true;
+                    arg++;
                     break;
                 case 'c':
                     colorize = true;
@@ -124,7 +129,7 @@ int show_tasks(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    std::vector<Task> task_vector = {};
+    std::vector<Task> task_vector;
     int max_task_id = 0;
     int max_priority = 0;
 
@@ -133,7 +138,7 @@ int show_tasks(int argc, char *argv[]) {
     while (task_read) {
         Task task;
         task_read = static_cast<bool>(database >> task);
-        if (task_read && task.is_date_equal(date)) {
+        if (task_read && task.is_date_equal(date) && (not undone_only || !task.done)) {
             task_vector.push_back(task);
             if (task.id > max_task_id) max_task_id = task.id;
             if (task.priority > max_priority) max_priority = task.priority;

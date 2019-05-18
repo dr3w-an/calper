@@ -37,9 +37,9 @@ std::string Task::format(int id_width, int priority_width) const {
 
 
 bool Task::operator < (const Task &task) const {
-    return (
-        priority > task.priority || (priority == task.priority && (year < task.year ||
-            year < task.year || (year == task.year && (month < task.month ||
+    return (priority > task.priority ||
+        (priority == task.priority && (year < task.year ||
+            (year == task.year && (month < task.month ||
                 (month == task.month && (day < task.day ||
                     (day == task.day && (start < task.start ||
                         (start == task.start && (end < task.end ||
