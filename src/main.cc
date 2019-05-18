@@ -18,6 +18,7 @@ int show_usage(char *program_name) {
               << "\tremove <ID>            Remove task\n"
               << "\n"
               << "Options:\n"
+              << "\t-p PRIORITY            Priority of task (default is 1)\n"
               << "\t-d DAY                 Day of task (default is system time)\n"
               << "\t-m MONTH               Month of task (default is system time)\n"
               << "\t-y YEAR                Year of task (default is system time)\n"
@@ -37,6 +38,16 @@ bool stoi(const std::string &str, int &value) {
         std::cerr << "Invalid argument: '" << str << "' cannot be converted to a number" << std::endl;
         return false;
     }
+}
+
+
+int int_width(int n) {
+    int width = 0;
+    while (n) {
+        n /= 10;
+        width++;
+    }
+    return width;
 }
 
 
@@ -109,6 +120,7 @@ int show_tasks(int argc, char *argv[]) {
 
     std::vector<Task> task_vector = {};
     int max_task_id = 0;
+    int max_priority = 0;
 
     database.seekg(0, std::ios_base::beg);
     bool task_read = true;
@@ -118,24 +130,19 @@ int show_tasks(int argc, char *argv[]) {
         if (task_read && task.is_date_equal(date)) {
             task_vector.push_back(task);
             if (task.id > max_task_id) max_task_id = task.id;
+            if (task.priority > max_priority) max_priority = task.priority;
 	}
     }
     database.close();
 
     std::sort(task_vector.begin(), task_vector.end());
-
-    int id_space = 0;
-    while (max_task_id) {
-        max_task_id /= 10;
-        id_space++;
-    }
+    int id_width = int_width(max_task_id);
+    int priority_width = int_width(max_priority);
 
     if (!task_vector.empty()) {
         std::cout << "Tasks on " << date.date_format() << '\n';
         for (Task task: task_vector) {
-            char mark = task.done ? 'x' : ' ';
-            std::cout << std::setw(id_space) << task.id << " [" << mark << "] "
-                      << task.format() << ' ' << task.title << '\n';
+            std::cout << task.format(id_width, priority_width) << '\n';
         }
         return EXIT_SUCCESS;
     } else {
@@ -147,21 +154,31 @@ int show_tasks(int argc, char *argv[]) {
 
 int parse_task_argument(char *argv[], int arg, Task &task) {
     switch (argv[arg][1]) {
+        case 'p': {
+            int priority;
+            if (!stoi(argv[arg + 1], priority))
+                return -1;
+            task.priority = priority;
+            return arg + 2;
+        }
         case 'y': {
             int year;
-            if (!stoi(argv[arg + 1], year)) return 1;
+            if (!stoi(argv[arg + 1], year))
+                return -1;
             task.set_year(year);
             return arg + 2;
         }
         case 'm': {
             int month;
-            if (!stoi(argv[arg + 1], month)) return 1;
+            if (!stoi(argv[arg + 1], month))
+                return -1;
             task.set_month(month);
             return arg + 2;
         }
         case 'd': {
             int day;
-            if (!stoi(argv[arg + 1], day)) return 1;
+            if (!stoi(argv[arg + 1], day))
+                return -1;
             task.set_day(day);
             return arg + 2;
         }
@@ -203,7 +220,10 @@ int add_task(int argc, char *argv[]) {
         std::string argument = argv[arg];
         if (argument[0] == '-' && argument.size() == 2) {
             arg = parse_task_argument(argv, arg, task);
-            continue;
+            if (arg < 0)
+                return EXIT_FAILURE;
+            else
+                continue;
         }
         if (stream_is_empty) {
             title << argument;
@@ -241,8 +261,7 @@ int add_task(int argc, char *argv[]) {
     }
 
     if (database << task) {
-        std::cout << "Task successfully added on " << task.format() << " with ID "
-                  << task.id << std::endl;
+        std::cout << "Task successfully added:\n" << task.format() << std::endl;
     } else {
         std::cerr << "Can't add task." << std::endl;
     }
@@ -295,7 +314,10 @@ int edit_task(int argc, char *argv[]) {
                     std::string argument = argv[arg];
                     if (argument[0] == '-' && argument.size() == 2) {
                         arg = parse_task_argument(argv, arg, task);
-                        continue;
+                        if (arg < 0)
+                            return EXIT_FAILURE;
+                        else
+                            continue;
                     }
                     if (task_ids.size() == 1 && stream_is_empty) {
                         title << argument;

@@ -1,9 +1,10 @@
 #include "Task.h"
+#include <iomanip>
 #include <vector>
 
 
 Task::Task():
-    start(0, 0), end(23, 59), done(false)
+    start(0, 0), end(23, 59), done(false), priority(1)
 {}
 
 
@@ -23,20 +24,27 @@ void Task::set_end(const Time &time) {
 }
 
 
-std::string Task::format() const {
+std::string Task::format(int id_width, int priority_width) const {
     std::ostringstream stream;
-    stream << date_format() << " (" << start.format() << '-' << end.format() << ")";
+    stream << std::setw(id_width) << id
+           << " [" << (done ? 'X' : ' ') << "] "
+           << std::setw(priority_width) << priority
+           << ' ' << date_format()
+           << " (" << start.format() << '-' << end.format() << ") "
+           << title;
     return stream.str();
 }
 
 
 bool Task::operator < (const Task &task) const {
     return (
-        year < task.year || (year == task.year && (month < task.month ||
-            (month == task.month && (day < task.day ||
-                (day == task.day && (start < task.start ||
-                    (start == task.start && (end < task.end ||
-                        (end == task.end && (id < task.id))
+        priority > task.priority || (priority == task.priority && (year < task.year ||
+            year < task.year || (year == task.year && (month < task.month ||
+                (month == task.month && (day < task.day ||
+                    (day == task.day && (start < task.start ||
+                        (start == task.start && (end < task.end ||
+                            (end == task.end && (id < task.id))
+                        ))
                     ))
                 ))
             ))
@@ -51,6 +59,8 @@ std::istream &operator >> (std::istream &stream, Task &task) {
     if (stream >> task.id) {
         stream >> separator;
         stream >> task.done;
+        stream >> separator;
+        stream >> task.priority;
 
         int y;
         stream >> separator;
@@ -96,6 +106,8 @@ std::ostream &operator << (std::ostream &stream, const Task &task) {
     stream << task.id;
     stream << separator;
     stream << task.done;
+    stream << separator;
+    stream << task.priority;
     stream << separator;
     stream << task.date_format();
     stream << separator;

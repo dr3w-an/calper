@@ -10,6 +10,7 @@ class Task: public Date {
     public:
         int id;
         bool done;
+        int priority;
         std::string title;
 
         Task();
@@ -17,7 +18,7 @@ class Task: public Date {
         void set_start(const Time &);
         void set_end(const Time &);
 
-        std::string format() const;
+        std::string format(int id_width=0, int priority_width=0) const;
 
         bool operator < (const Task &) const;
         friend std::istream &operator >> (std::istream &, Task &);
