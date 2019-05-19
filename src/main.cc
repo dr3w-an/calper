@@ -10,29 +10,29 @@
 
 
 int usage(char *program_name) {
-    std::cerr << "Usage: " << program_name << " <command>\n\n"
+    std::cerr << "Usage: " << program_name << " <command> [options]\n"
+              << '\n'
               << "Commands:\n"
-              << "\tshow [options]         Show tasks\n"
-              << "\tedit <ID> [options]    Edit task\n"
-              << "\t  Options:\n"
-              << "\t    -y YEAR            Year of task (default is system time)\n"
-              << "\t    -m MONTH           Month of task (default is unset or system time)\n"
-              << "\t    -d DAY             Day of task (default is unset or system time)\n"
-              << "\t    -x                 Exclude done tasks (default is false)\n"
-              << "\t    -c                 Colorize the output (default is false)\n"
+              << "  show             Show tasks\n"
+              << "    Options:\n"
+              << "      -y YEAR      Year of task (default is system time)\n"
+              << "      -m MONTH     Month of task (default is unset or system time)\n"
+              << "      -d DAY       Day of task (default is unset or system time)\n"
+              << "      -x           Exclude done tasks (default is false)\n"
+              << "      -c           Colorize the output (default is false)\n"
               << '\n'
-              << "\tadd <TITLE> [options]  Add task\n"
-              << "\tedit <ID> [options]    Edit task\n"
-              << "\t  Options:\n"
-              << "\t    -p PRIORITY        Priority of task (default is 1)\n"
-              << "\t    -y YEAR            Year of task (default is system time)\n"
-              << "\t    -m MONTH           Month of task (default is system time)\n"
-              << "\t    -d DAY             Day of task (default is system time)\n"
-              << "\t    -s HH:MM           Start time of task (default is 00:00)\n"
-              << "\t    -e HH:MM           End time of task (default is 23:59)\n"
-              << "\t    -x                 Task is done (default is false)\n"
+              << "  add <TITLE>      Add task\n"
+              << "  edit <ID>        Edit task\n"
+              << "    Options:\n"
+              << "      -p PRIORITY  Priority of task (default is 1)\n"
+              << "      -y YEAR      Year of task (default is system time)\n"
+              << "      -m MONTH     Month of task (default is system time)\n"
+              << "      -d DAY       Day of task (default is system time)\n"
+              << "      -s HH:MM     Start time of task (default is 00:00)\n"
+              << "      -e HH:MM     End time of task (default is 23:59)\n"
+              << "      -x           Task is done (default is false)\n"
               << '\n'
-              << "\tremove <ID>            Remove task\n"
+              << "  remove <ID>      Remove task\n"
               << '\n'
               << "Only the first character of these commands is counted.\n";
     return EXIT_FAILURE;
@@ -171,7 +171,8 @@ int show_tasks(int argc, char *argv[]) {
             if (task_vector.size() != 1) std::cout << 's';
             std::cout << " undone " << prep << ' ' << date.date_format() << '\n';
         } else {
-            std::cout << tasks_done << '/' << task_vector.size() << " task";
+            if ((int)task_vector.size() != tasks_done) std::cout << tasks_done << '/';
+            std::cout << task_vector.size() << " task";
             if (tasks_done != 1) std::cout << 's';
             std::cout << " done " << prep << ' ' << date.date_format() << '\n';
         }
@@ -200,7 +201,9 @@ int show_tasks(int argc, char *argv[]) {
         }
         return EXIT_SUCCESS;
     } else {
-        std::cerr << "No tasks " << prep << ' ' << date.date_format() << std::endl;
+        std::cerr << "No tasks ";
+        if (undone_only) std::cerr << "undone ";
+        std::cerr << prep << ' ' << date.date_format() << std::endl;
         return EXIT_FAILURE;
     }
 };
