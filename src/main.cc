@@ -51,7 +51,7 @@ bool stoi(const std::string &str, int &value) {
 
 
 int int_width(int n) {
-    // Calculate the number of digits in number n
+    /* Посчитать количество цифр в числе n */
     int width = 0;
     while (n) {
         n /= 10;
@@ -188,9 +188,9 @@ int show_tasks(int argc, char *argv[]) {
             for (Task task: task_vector) {
                 dummy.priority = task.priority;
                 if (task.done)
-                    std::cout << "\033[32m" << task.format(id_width, priority_width) << "\033[0m\n";  // Green
+                    std::cout << "\033[32m" << task.format(id_width, priority_width) << "\033[0m\n";  // Зелёный
                 else if (task < dummy)
-                    std::cout << "\033[31m" << task.format(id_width, priority_width) << "\033[0m\n";  // Red
+                    std::cout << "\033[31m" << task.format(id_width, priority_width) << "\033[0m\n";  // Красный
                 else
                     std::cout << task.format(id_width, priority_width) << '\n';
             }
@@ -210,8 +210,8 @@ int show_tasks(int argc, char *argv[]) {
 
 
 int parse_task_argument(char *argv[], int arg, Task &task) {
-    // Same arguments in add and edit
     switch (argv[arg][1]) {
+        /* Аргументы для add и edit */
         case 'p': {
             int priority;
             if (!stoi(argv[arg + 1], priority))
@@ -309,7 +309,7 @@ int add_task(int argc, char *argv[]) {
                 break;
             }
             database.get(ch);
-        } while (ch != '\n');
+        } while (ch != '\n');  // Поиск последнего переноса строки
 
         int task_id;
         database >> task_id;

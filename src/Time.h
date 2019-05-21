@@ -2,8 +2,9 @@
 
 
 class Time {
-    int hours;
-    int min;
+    private:        // Допустимые значения:
+        int hours;  // от 0 до 23
+        int min;    // от 0 до 59
 
     public:
         Time() = default;
@@ -13,8 +14,6 @@ class Time {
 
         bool operator <  (const Time &) const;
         bool operator == (const Time &) const;
-        bool operator >= (const Time &) const;
         bool operator <= (const Time &) const;
         friend std::istream &operator >> (std::istream &, Time &);
-        friend std::ostream &operator << (std::ostream &, const Time &);
 };

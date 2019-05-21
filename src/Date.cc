@@ -63,8 +63,8 @@ void Date::set_day(int d) {
 
     switch (month) {
         case 2:
-            if ((year % 400 == 0) || ((year % 4 == 0) && (year % 100 != 0))) {
-                max_limit = 29;  // Leap year
+            if ((year % 400 == 0) || ((year % 4 == 0) && (year % 100 != 0))) {  // Проверка на високосный год
+                max_limit = 29;
             } else {
                 max_limit = 28;
             }

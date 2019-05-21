@@ -9,7 +9,7 @@ Task::Task():
 
 
 void Task::set_start(const Time &time) {
-    if (time >= end)
+    if (end <= time)
         throw std::invalid_argument("start must be before end");
     else
         start = time;
@@ -37,8 +37,9 @@ std::string Task::format(int id_width, int priority_width) const {
 
 
 bool Task::operator < (const Task &task) const {
-    /* Used in std::sort in show command: the lesser tasks, which are defined
-     * by returning true in this operator, appear on top of the list. */
+    /* Порядок приоритета учёта полей в порядке убывания:
+     * priority, year, month, day, start, end, id.
+     * Меньшие задания после сортировки отображаются сверху списка. */
     return (priority > task.priority ||
         (priority == task.priority && (year < task.year ||
             (year == task.year && (month < task.month ||
