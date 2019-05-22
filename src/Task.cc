@@ -39,7 +39,7 @@ std::string Task::format(int id_width, int priority_width) const {
 bool Task::operator < (const Task &task) const {
     /* Порядок приоритета учёта полей в порядке убывания:
      * priority, year, month, day, start, end, id.
-     * Меньшие задания после сортировки отображаются сверху списка. */
+     * Меньшие задачи после сортировки отображаются сверху списка. */
     return (priority > task.priority ||
         (priority == task.priority && (year < task.year ||
             (year == task.year && (month < task.month ||

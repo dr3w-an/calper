@@ -22,7 +22,7 @@ int usage(char *program_name) {
               << "      -c           Colorize the output (default is false)\n"
               << '\n'
               << "  add <TITLE>      Add task\n"
-              << "  edit <ID>        Edit task\n"
+              << "  edit <IDS>       Edit task(s)\n"
               << "    Options:\n"
               << "      -p PRIORITY  Priority of task (default is 1)\n"
               << "      -y YEAR      Year of task (default is system time)\n"
@@ -32,7 +32,7 @@ int usage(char *program_name) {
               << "      -e HH:MM     End time of task (default is 23:59)\n"
               << "      -x           Task is done (default is false)\n"
               << '\n'
-              << "  remove <ID>      Remove task\n"
+              << "  remove <IDS>     Remove task(s)\n"
               << '\n'
               << "Only the first character of these commands is counted.\n";
     return EXIT_FAILURE;
@@ -153,7 +153,7 @@ int show_tasks(int argc, char *argv[]) {
         task_read = static_cast<bool>(database >> task);
         if (task_read && task.is_date_equal(date) && !(undone_only && task.done)) {
             task_vector.push_back(task);
-            if (task.done) tasks_done++;
+            if (!undone_only && task.done) tasks_done++;
             if (task.id > max_task_id) max_task_id = task.id;
             if (task.priority > max_priority) max_priority = task.priority;
 	}
@@ -318,14 +318,15 @@ int add_task(int argc, char *argv[]) {
         task.id = 1;
     }
 
-    if (database << task) {
+    bool result = static_cast<bool>(database << task);
+    database.close();
+    if (result) {
         std::cout << "Task successfully added:\n" << task.format() << std::endl;
+        return EXIT_SUCCESS;
     } else {
         std::cerr << "Can't add task." << std::endl;
+        return EXIT_FAILURE;
     }
-
-    database.close();
-    return EXIT_SUCCESS;
 }
 
 
@@ -401,6 +402,7 @@ int edit_task(int argc, char *argv[]) {
         std::cout << " successfully edited." << std::endl;
         return EXIT_SUCCESS;
     } else {
+        remove(temp_database_name);
         std::cerr << "No tasks edited." << std::endl;
         return EXIT_FAILURE;
     }
