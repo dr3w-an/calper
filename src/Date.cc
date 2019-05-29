@@ -81,7 +81,7 @@ void Date::set_day(int d) {
     }
 
     if (d < 1 || d > max_limit) {
-        std::ostringstream error_message("day must be a number in range from 1 to ");
+        std::ostringstream error_message("day must be a number in range from 1 to ", std::ios::app);
         error_message << max_limit;
         throw std::invalid_argument(error_message.str());
     } else {
