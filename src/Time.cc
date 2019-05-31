@@ -33,11 +33,6 @@ bool Time::operator == (const Time &time) const {
 }
 
 
-bool Time::operator <= (const Time &time) const {
-    return (hours < time.hours || (hours == time.hours && min <= time.min));
-}
-
-
 std::istream& operator >> (std::istream &stream, Time &time) {
     char separator;
     int hours, min;

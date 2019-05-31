@@ -7,18 +7,6 @@ Date::Date():
 {}
 
 
-tm *current_tm() {
-    time_t now = time(NULL);
-    return localtime(&now);
-}
-
-
-void Date::set_year() {
-    tm *date = current_tm();
-    _year = date->tm_year + 1900;
-}
-
-
 void Date::set_year(int year) {
     if (year < 1) {
         throw std::invalid_argument("year must be a number greater or equal than 1");
@@ -29,12 +17,6 @@ void Date::set_year(int year) {
 }
 
 
-void Date::set_month() {
-    tm *date = current_tm();
-    _month = date->tm_mon + 1;
-}
-
-
 void Date::set_month(int month) {
     if (month < 1 || month > 12) {
         throw std::invalid_argument("month must be a number in range from 1 to 12");
@@ -42,12 +24,6 @@ void Date::set_month(int month) {
         _month = month;
         if (_day) set_day(_day);
     }
-}
-
-
-void Date::set_day() {
-    tm *date = current_tm();
-    _day = date->tm_mday;
 }
 
 

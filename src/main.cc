@@ -40,6 +40,7 @@ int usage(char *program_name) {
 
 
 bool stoi(const std::string &str, int &value) {
+    /* Конвертировать строку в число функцией std::stoi с выводом ошибок */
     try {
         value = std::stoi(str);
         return true;
@@ -110,23 +111,26 @@ int show_tasks(int argc, char *argv[]) {
         arg++;
     }
 
+    time_t now = time(NULL);
+    tm *time_info = localtime(&now);
+
     Date date;
 
     if (year_specified)
         date.set_year(year);
     else
-        date.set_year();
+        date.set_year(time_info->tm_year + 1900);
 
     if (month_specified)
         date.set_month(month);
     else if (!year_specified || day_specified)
-        date.set_month();
+        date.set_month(time_info->tm_mon + 1);
 
-    bool day_is_set = true;
+    bool day_is_set = true;  // Объявляется для использования корректного предлога в выводе
     if (day_specified)
         date.set_day(day);
     else if (!(year_specified || month_specified))
-        date.set_day();
+        date.set_day(time_info->tm_mday);
     else
         day_is_set = false;
 
@@ -147,11 +151,11 @@ int show_tasks(int argc, char *argv[]) {
     int max_priority = 0;
 
     database.seekg(0, std::ios_base::beg);
-    bool task_read = true;
-    while (task_read) {
+    bool task_read_success = true;
+    while (task_read_success) {
         Task task;
-        task_read = static_cast<bool>(database >> task);
-        if (task_read && !(undone_only && task.done) &&
+        task_read_success = static_cast<bool>(database >> task);
+        if (task_read_success && !(undone_only && task.done) &&
             (task.year() == date.year() &&
                 (!date.month() || (task.month() == date.month() &&
                     (!date.day() || task.day() == date.day())
@@ -184,23 +188,25 @@ int show_tasks(int argc, char *argv[]) {
         }
 
         if (colorize) {
-            Task dummy;
-            dummy.set_year();
-            dummy.set_month();
-            dummy.set_day();
+            Task pivot;  // За точку отсчёта определения цвета берётся задание, начинающееся в текущее системное время
             time_t now = time(NULL);
             tm *time_info = localtime(&now);
-            Time start(time_info->tm_hour, time_info->tm_min);
-            dummy.set_start(start);
+            pivot.set_year(time_info->tm_year + 1900);
+            pivot.set_month(time_info->tm_mon + 1);
+            pivot.set_day(time_info->tm_mday);
+            pivot.set_start(Time(time_info->tm_hour, time_info->tm_min));
 
             for (Task task: task_vector) {
-                dummy.priority = task.priority;
-                if (task.done)
+                if (task.done) {
                     std::cout << "\033[32m" << task.format(id_width, priority_width) << "\033[0m\n";  // Зелёный
-                else if (task < dummy)
-                    std::cout << "\033[31m" << task.format(id_width, priority_width) << "\033[0m\n";  // Красный
-                else
-                    std::cout << task.format(id_width, priority_width) << '\n';
+                } else {
+                    pivot.id = task.id;
+                    pivot.priority = task.priority;
+                    if (task < pivot)
+                        std::cout << "\033[31m" << task.format(id_width, priority_width) << "\033[0m\n";  // Красный
+                    else
+                        std::cout << task.format(id_width, priority_width) << '\n';
+                }
             }
         } else {
             for (Task task: task_vector) {
@@ -305,8 +311,11 @@ int add_task(int argc, char *argv[]) {
     if (argc <= 2)
         return usage(argv[0]);
 
+    time_t now = time(NULL);
+    tm *time_info = localtime(&now);
+
     Task task;
-    task.set_year();
+    task.set_year(time_info->tm_year + 1900);
 
     if (parse_task_argument(argv, 2, argc, task) < 0)
         return EXIT_FAILURE;
@@ -314,8 +323,8 @@ int add_task(int argc, char *argv[]) {
     if (task.title.empty())
         return usage(argv[0]);
 
-    if (!task.month()) task.set_month();
-    if (!task.day()) task.set_day();
+    if (!task.month()) task.set_month(time_info->tm_mon + 1);
+    if (!task.day()) task.set_day(time_info->tm_mday);
 
     std::fstream database;
     database.open(DATABASE_NAME, std::ios::ate | std::ios::app | std::ios::in | std::ios::out);
@@ -379,23 +388,22 @@ int edit_task(int argc, char *argv[]) {
     temp_database.open(temp_database_name);
     std::ostringstream title;
 
-    bool task_read = true;
-    int task_count = 0;
-    while (task_read) {
+    bool task_read_success = true;
+    int edited_count = 0;
+    while (task_read_success) {
         Task task;
-        task_read = static_cast<bool>(database >> task);
-        if (task_read) {
+        task_read_success = static_cast<bool>(database >> task);
+        if (task_read_success) {
             if (task_ids.find(task.id) != task_ids.end()) {
                 Date old_date = task;
                 Date new_date;
                 new_date.set_year(task.year());
-                task.Date::operator = (new_date);
+                task.Date::operator = (new_date);  // Сброс значений месяца и дня для их изменения
                 if (parse_task_argument(argv, options_start, argc, task) < 0)
                     return EXIT_FAILURE;
-                if (!task.year()) task.set_year(old_date.year());
-                if (!task.month()) task.set_month(old_date.month());
+                if (!task.month()) task.set_month(old_date.month());  // Установка неизменённых значений
                 if (!task.day()) task.set_day(old_date.day());
-                task_count++;
+                edited_count++;
             }
             temp_database << task;
         }
@@ -403,11 +411,11 @@ int edit_task(int argc, char *argv[]) {
     database.close();
     temp_database.close();
 
-    if (task_count > 0) {
+    if (edited_count > 0) {
         remove(DATABASE_NAME);
         rename(temp_database_name, DATABASE_NAME);
-        std::cout << task_count << " task";
-        if (task_count != 1) std::cout << 's';
+        std::cout << edited_count << " task";
+        if (edited_count != 1) std::cout << 's';
         std::cout << " successfully edited." << std::endl;
         return EXIT_SUCCESS;
     } else {
@@ -442,27 +450,26 @@ int remove_task(int argc, char *argv[]) {
     std::ofstream temp_database;
     temp_database.open(temp_database_name);
 
-    bool task_read = true;
-    int task_count = 0;
-    while (task_read) {
+    bool task_read_success = true;
+    int removed_count = 0;
+    while (task_read_success) {
         Task task;
-        task_read = static_cast<bool>(database >> task);
-        if (task_read) {
-            if (task_ids.find(task.id) == task_ids.end()) {
+        task_read_success = static_cast<bool>(database >> task);
+        if (task_read_success) {
+            if (task_ids.find(task.id) == task_ids.end())
                 temp_database << task;
-            } else {
-                task_count++;
-            }
+            else
+                removed_count++;
         }
     }
     database.close();
     temp_database.close();
 
-    if (task_count > 0) {
+    if (removed_count > 0) {
         remove(DATABASE_NAME);
         rename(temp_database_name, DATABASE_NAME);
-        std::cout << task_count << " task";
-        if (task_count != 1) std::cout << 's';
+        std::cout << removed_count << " task";
+        if (removed_count != 1) std::cout << 's';
         std::cout << " successfully removed." << std::endl;
         return EXIT_SUCCESS;
     } else {

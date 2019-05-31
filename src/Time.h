@@ -14,6 +14,5 @@ class Time {
 
         bool operator <  (const Time &) const;
         bool operator == (const Time &) const;
-        bool operator <= (const Time &) const;
         friend std::istream &operator >> (std::istream &, Time &);
 };

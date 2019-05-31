@@ -9,16 +9,16 @@ Task::Task():
 
 
 void Task::set_start(const Time &time) {
-    if (end <= time)
-        throw std::invalid_argument("start must be before end");
+    if (end < time)
+        throw std::invalid_argument("start cannot be after end");
     else
         start = time;
 }
 
 
 void Task::set_end(const Time &time) {
-    if (time <= start)
-        throw std::invalid_argument("end must be after start");
+    if (time < start)
+        throw std::invalid_argument("end cannot be before start");
     else
         end = time;
 }
