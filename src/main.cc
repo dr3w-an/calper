@@ -151,7 +151,13 @@ int show_tasks(int argc, char *argv[]) {
     while (task_read) {
         Task task;
         task_read = static_cast<bool>(database >> task);
-        if (task_read && task.is_date_equal(date) && !(undone_only && task.done)) {
+        if (task_read && !(undone_only && task.done) &&
+            (task.year() == date.year() &&
+                (!date.month() || (task.month() == date.month() &&
+                    (!date.day() || task.day() == date.day())
+                ))
+            )
+        ) {
             task_vector.push_back(task);
             if (!undone_only && task.done) tasks_done++;
             if (task.id > max_task_id) max_task_id = task.id;
@@ -179,7 +185,9 @@ int show_tasks(int argc, char *argv[]) {
 
         if (colorize) {
             Task dummy;
-            dummy.today();
+            dummy.set_year();
+            dummy.set_month();
+            dummy.set_day();
             time_t now = time(NULL);
             tm *time_info = localtime(&now);
             Time start(time_info->tm_hour, time_info->tm_min);
@@ -209,79 +217,73 @@ int show_tasks(int argc, char *argv[]) {
 };
 
 
-int parse_task_argument(char *argv[], int arg, Task &task) {
-    switch (argv[arg][1]) {
-        /* Аргументы для add и edit */
-        case 'p': {
-            int priority;
-            if (!stoi(argv[arg + 1], priority))
-                return -1;
-            task.priority = priority;
-            return arg + 2;
-        }
-        case 'y': {
-            int year;
-            if (!stoi(argv[arg + 1], year))
-                return -1;
-            task.set_year(year);
-            return arg + 2;
-        }
-        case 'm': {
-            int month;
-            if (!stoi(argv[arg + 1], month))
-                return -1;
-            task.set_month(month);
-            return arg + 2;
-        }
-        case 'd': {
-            int day;
-            if (!stoi(argv[arg + 1], day))
-                return -1;
-            task.set_day(day);
-            return arg + 2;
-        }
-        case 's': {
-            Time start;
-            std::istringstream stream(argv[arg + 1]);
-            stream >> start;
-            task.set_start(start);
-            return arg + 2;
-        }
-        case 'e': {
-            Time end;
-            std::istringstream stream(argv[arg + 1]);
-            stream >> end;
-            task.set_end(end);
-            return arg + 2;
-        }
-        case 'x': {
-            task.done = not task.done;
-            return arg + 1;
-        }
-    }
-    std::cerr << "Unknown option: " << argv[arg] << std::endl;
-    return arg + 1;
-}
+int parse_task_argument(char *argv[], int arg, int argc, Task &task) {
+    int year, month, day;
+    bool year_specified = false;
+    bool month_specified = false;
+    bool day_specified = false;
 
-
-int add_task(int argc, char *argv[]) {
-    if (argc <= 2)
-        return usage(argv[0]);
-
-    Task task;
-    task.today();
-
-    int arg = 2;
     std::ostringstream title;
     bool stream_is_empty = true;
+
     while (arg < argc) {
         std::string argument = argv[arg];
+
         if (argument[0] == '-' && argument.size() == 2) {
-            arg = parse_task_argument(argv, arg, task);
-            if (arg < 0)
-                return EXIT_FAILURE;
-            else
-                continue;
+            switch (argv[arg][1]) {
+                /* Аргументы для add и edit */
+                case 'p': {
+                    int priority;
+                    if (!stoi(argv[arg + 1], priority))
+                        return -1;
+                    task.priority = priority;
+                    arg += 2;
+                    break;
+                }
+                case 'y':
+                    if (!stoi(argv[arg + 1], year))
+                        return -1;
+                    year_specified = true;
+                    arg += 2;
+                    break;
+                case 'm':
+                    if (!stoi(argv[arg + 1], month))
+                        return -1;
+                    month_specified = true;
+                    arg += 2;
+                    break;
+                case 'd':
+                    if (!stoi(argv[arg + 1], day))
+                        return -1;
+                    day_specified = true;
+                    arg += 2;
+                    break;
+                case 's': {
+                    Time start;
+                    std::istringstream stream(argv[arg + 1]);
+                    stream >> start;
+                    task.set_start(start);
+                    arg += 2;
+                    break;
+                }
+                case 'e': {
+                    Time end;
+                    std::istringstream stream(argv[arg + 1]);
+                    stream >> end;
+                    task.set_end(end);
+                    arg += 2;
+                    break;
+                }
+                case 'x':
+                    task.done = not task.done;
+                    arg++;
+                    break;
+                default:
+                    std::cerr << "Unknown option: " << argv[arg] << std::endl;
+                    arg++;
+                    break;
+            }
+            continue;
         }
         if (stream_is_empty) {
             title << argument;
@@ -291,11 +293,29 @@ int add_task(int argc, char *argv[]) {
         }
         arg++;
     }
+    if (year_specified) task.set_year(year);
+    if (month_specified) task.set_month(month);
+    if (day_specified) task.set_day(day);
+    if (!stream_is_empty) task.title = title.str();
+    return 0;
+}
 
-    if (stream_is_empty)
+
+int add_task(int argc, char *argv[]) {
+    if (argc <= 2)
         return usage(argv[0]);
 
-    task.title = title.str();
+    Task task;
+    task.set_year();
+
+    if (parse_task_argument(argv, 2, argc, task) < 0)
+        return EXIT_FAILURE;
+
+    if (task.title.empty())
+        return usage(argv[0]);
+
+    if (!task.month()) task.set_month();
+    if (!task.day()) task.set_day();
 
     std::fstream database;
     database.open(DATABASE_NAME, std::ios::ate | std::ios::app | std::ios::in | std::ios::out);
@@ -361,32 +381,21 @@ int edit_task(int argc, char *argv[]) {
 
     bool task_read = true;
     int task_count = 0;
-    bool stream_is_empty = true;
     while (task_read) {
         Task task;
         task_read = static_cast<bool>(database >> task);
         if (task_read) {
-            int arg = options_start;
             if (task_ids.find(task.id) != task_ids.end()) {
+                Date old_date = task;
+                Date new_date;
+                new_date.set_year(task.year());
+                task.Date::operator = (new_date);
+                if (parse_task_argument(argv, options_start, argc, task) < 0)
+                    return EXIT_FAILURE;
+                if (!task.year()) task.set_year(old_date.year());
+                if (!task.month()) task.set_month(old_date.month());
+                if (!task.day()) task.set_day(old_date.day());
                 task_count++;
-                while (arg < argc) {
-                    std::string argument = argv[arg];
-                    if (argument[0] == '-' && argument.size() == 2) {
-                        arg = parse_task_argument(argv, arg, task);
-                        if (arg < 0)
-                            return EXIT_FAILURE;
-                        else
-                            continue;
-                    }
-                    if (task_ids.size() == 1 && stream_is_empty) {
-                        title << argument;
-                        stream_is_empty = false;
-                    } else {
-                        title << ' ' << argument;
-                    }
-                    arg++;
-                }
-                if (!stream_is_empty) task.title = title.str();
             }
             temp_database << task;
         }

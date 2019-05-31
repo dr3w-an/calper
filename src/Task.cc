@@ -41,10 +41,10 @@ bool Task::operator < (const Task &task) const {
      * priority, year, month, day, start, end, id.
      * Меньшие задачи после сортировки отображаются сверху списка. */
     return (priority > task.priority ||
-        (priority == task.priority && (year < task.year ||
-            (year == task.year && (month < task.month ||
-                (month == task.month && (day < task.day ||
-                    (day == task.day && (start < task.start ||
+        (priority == task.priority && (_year < task._year ||
+            (_year == task._year && (_month < task._month ||
+                (_month == task._month && (_day < task._day ||
+                    (_day == task._day && (start < task.start ||
                         (start == task.start && (end < task.end ||
                             (end == task.end && (id < task.id))
                         ))

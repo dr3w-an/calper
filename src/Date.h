@@ -2,22 +2,25 @@
 
 
 class Date {
-    protected:      // Допустимые значения (включительно):
-        int year;   // от 1
-        int month;  // от 1 до 12
-        int day;    // от 1 до максимального количества дней в заданном месяце
+    protected:       // Присваемое значение при инициализации:
+        int _year;   // значение не присваивается
+        int _month;  // 0
+        int _day;    // 0
 
     public:
         Date();
 
-        void set_year(int);
-        void set_month(int);
-        void set_day(int);
-        void set_year();   // Сеттеры без аргументов
-        void set_month();  // устанавливают значения
-        void set_day();    // текущего системного времени
-        void today();
+        int year() { return _year; };
+        int month() { return _month; };
+        int day() { return _day; };
+        void set_year(int);   // Допустимые значения: от 1
+        void set_month(int);  // Допустимые значения: от 1 до 12
+        void set_day(int);    // Допустимые значения: от 1 до максимального количества дней в установленном месяце или 31, если месяц не установлен
+        void set_year();      // Сеттеры без аргументов устанавливают значения текущего системного времени
+        void set_month();
+        void set_day();
 
-        bool is_date_equal(const Date &) const;
         std::string date_format() const;
+
+        Date &operator = (const Date &);
 };
