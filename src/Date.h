@@ -10,9 +10,9 @@ class Date {
     public:
         Date();
 
-        int year() { return _year; };
-        int month() { return _month; };
-        int day() { return _day; };
+        int year() const { return _year; };
+        int month() const { return _month; };
+        int day() const { return _day; };
         void set_year(int);   // Допустимые значения: от 1
         void set_month(int);  // Допустимые значения: от 1 до 12
         void set_day(int);    // Допустимые значения: от 1 до максимального количества дней в установленном месяце или 31, если месяц не установлен
